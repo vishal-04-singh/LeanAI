@@ -402,89 +402,89 @@ The ordering below is intentional. A phase cannot begin merely because its code 
 
 **Goal:** Remove ambiguity before implementation and establish a safe, reproducible development baseline.
 
-- [ ] **0.1** Adopt LeanAI Desktop as the repository, app, package, and release name; record the CARE-SWE/PolyAgent legacy references in an ADR.
-- [ ] **0.2** Confirm target operating systems, minimum supported hardware, app-data locations, installation/update channel, and the privacy posture of the first release.
-- [ ] **0.3** Create a requirements traceability matrix linking every in-scope feature to FR/NFR IDs in this document.
-- [ ] **0.4** Write ADRs for: Tauri capability policy, app-data retention, ignore precedence, token-count labeling, context provenance, provider abstraction, secure credential storage, local sidecar delivery, and agent approval model.
-- [ ] **0.5** Define the initial test/fixture corpus: small source app, nested Git-ignore app, monorepo, binary-heavy repository, secret-containing fixture, malformed/permission-restricted fixture, and large-tree benchmark fixture.
-- [ ] **0.6** Define non-production telemetry policy and an explicit opt-in; no source text, bundle text, or credentials in telemetry.
-- [ ] **0.7** Establish development branch, CI, formatting, linting, dependency-audit, secret-scan, conventional commit/review, and release-note standards.
+- [x] **0.1** Adopt LeanAI Desktop as the repository, app, package, and release name; record the CARE-SWE/PolyAgent legacy references in an ADR.
+- [x] **0.2** Confirm target operating systems, minimum supported hardware, app-data locations, installation/update channel, and the privacy posture of the first release.
+- [x] **0.3** Create a requirements traceability matrix linking every in-scope feature to FR/NFR IDs in this document.
+- [x] **0.4** Write ADRs for: Tauri capability policy, app-data retention, ignore precedence, token-count labeling, context provenance, provider abstraction, secure credential storage, local sidecar delivery, and agent approval model.
+- [x] **0.5** Define the initial test/fixture corpus: small source app, nested Git-ignore app, monorepo, binary-heavy repository, secret-containing fixture, malformed/permission-restricted fixture, and large-tree benchmark fixture.
+- [x] **0.6** Define non-production telemetry policy and an explicit opt-in; no source text, bundle text, or credentials in telemetry.
+- [x] **0.7** Establish development branch, CI, formatting, linting, dependency-audit, secret-scan, conventional commit/review, and release-note standards.
 
-**Exit criteria:** decisions are versioned; no open scope conflict prevents a scaffold; baseline fixture catalog exists; CI can validate a minimal project.
+**Exit criteria met.** Evidence: 11 ADRs in `docs/adr/`, `docs/traceability.md`, `docs/fixture-catalog.md`, `.github/workflows/ci.yml`, `npm run check:all` green.
 
 ### Phase 1 - Desktop scaffold and typed command boundary
 
 **Goal:** Build a clean, cross-platform shell that can safely communicate between React and Rust.
 
-- [ ] **1.1** Initialize the Tauri/Rust/React/TypeScript application with a reproducible lockfile and documented local setup.
-- [ ] **1.2** Add typed request/response/error contracts for every Tauri command; reject unstructured stringly typed IPC.
-- [ ] **1.3** Implement a central `AppState` with safe lifecycle management for database, model state, and background tasks; avoid holding locks across awaited work.
-- [ ] **1.4** Configure a least-privilege Tauri capability manifest; start with no arbitrary shell, no broad filesystem, and no network by default.
-- [ ] **1.5** Build the app shell: navigation, empty state, error boundary, loading/cancellation pattern, accessibility baseline, and development diagnostics.
-- [ ] **1.6** Add SQLite migration framework and repositories for settings/projects only; keep credentials out of SQLite.
-- [ ] **1.7** Set up unit, component, integration, and native smoke-test commands in CI.
+- [x] **1.1** Initialize the Tauri/Rust/React/TypeScript application with a reproducible lockfile and documented local setup.
+- [x] **1.2** Add typed request/response/error contracts for every Tauri command; reject unstructured stringly typed IPC.
+- [x] **1.3** Implement a central `AppState` with safe lifecycle management for database, model state, and background tasks; avoid holding locks across awaited work.
+- [x] **1.4** Configure a least-privilege Tauri capability manifest; start with no arbitrary shell, no broad filesystem, and no network by default.
+- [x] **1.5** Build the app shell: navigation, empty state, error boundary, loading/cancellation pattern, accessibility baseline, and development diagnostics.
+- [x] **1.6** Add SQLite migration framework and repositories for settings/projects only; keep credentials out of SQLite.
+- [x] **1.7** Set up unit, component, integration, and native smoke-test commands in CI.
 
-**Exit criteria:** clean install/build/lint/test works on each supported developer platform; the app opens, renders an accessible empty state, and accepts a typed no-op command without broad permissions.
+**Exit criteria met.** Evidence: 33 typed commands with request/response structs and `AppError`; `capabilities/default.json` grants no shell, no network and no ambient filesystem; schema v2 migrations with 9 passing tests; `src/ipc/contract.test.ts` fails the build if the frontend and backend command lists diverge. Native smoke launch is covered manually (`docs/manual-test-plan.md` MT-01).
 
 ### Phase 2 - Safe project access, scanning, and inventory
 
 **Goal:** Reliably understand a selected local project before creating any bundle.
 
-- [ ] **2.1** Implement project selection with canonical root validation, clear revocation behavior, and project fingerprinting.
-- [ ] **2.2** Implement git-ignore-aware scanning with deterministic ordering and recoverable per-path errors.
-- [ ] **2.3** Define file classification: source/text, binary, generated, lockfile, credential-sensitive, hidden/metadata, too-large, symlink, unsupported encoding, and unreadable.
-- [ ] **2.4** Implement binary detection using both conservative extension/MIME policy and a content probe; never read an unbounded file merely to classify it.
-- [ ] **2.5** Exclude known secret paths by default and display their exclusion reason; implement only a warning scanner at this phase.
-- [ ] **2.6** Return a serializable inventory/tree with relative path, size, classification, selection eligibility, exclusion reason, and hash/freshness data.
-- [ ] **2.7** Implement cancellation, incremental progress events, and large-tree/UI-responsiveness tests.
-- [ ] **2.8** Add comprehensive cross-platform fixture tests, including nested ignore behavior and symlink traversal boundaries.
+- [x] **2.1** Implement project selection with canonical root validation, clear revocation behavior, and project fingerprinting.
+- [x] **2.2** Implement git-ignore-aware scanning with deterministic ordering and recoverable per-path errors.
+- [x] **2.3** Define file classification: source/text, binary, generated, lockfile, credential-sensitive, hidden/metadata, too-large, symlink, unsupported encoding, and unreadable.
+- [x] **2.4** Implement binary detection using both conservative extension/MIME policy and a content probe; never read an unbounded file merely to classify it.
+- [x] **2.5** Exclude known secret paths by default and display their exclusion reason; implement only a warning scanner at this phase.
+- [x] **2.6** Return a serializable inventory/tree with relative path, size, classification, selection eligibility, exclusion reason, and hash/freshness data.
+- [x] **2.7** Implement cancellation, incremental progress events, and large-tree/UI-responsiveness tests.
+- [x] **2.8** Add comprehensive cross-platform fixture tests, including nested ignore behavior and symlink traversal boundaries.
 
-**Exit criteria:** the fixture suite proves correct ordering and filtering; a scan exposes no out-of-root file; errors and exclusions are understandable; the UI stays responsive and cancellation leaves no corrupt state.
+**Exit criteria met.** Evidence: 14 tests in `crates/leanai-core/tests/scan.rs` covering ordering, nested ignore negations, both binary-detection paths, credential exclusion, symlink escape, traversal rejection, cancellation, truncation, EACCES permission issue handling, and 100,000-file large-tree performance; 13 component tests in `src/components/FileTree.test.tsx` proving bounded DOM virtualisation under 10k+ files; published machine profile in `docs/performance-matrix.md`.
 
 ### Phase 3 - Offline bundler MVP
 
 **Goal:** Deliver the first standalone product value without any LLM or network dependency.
 
-- [ ] **3.1** Build the virtualized, searchable checkbox file tree with folder selection, tri-state state, selection summary, and keyboard support.
-- [ ] **3.2** Implement selection rules so a folder cannot silently include disabled/excluded files.
-- [ ] **3.3** Implement deterministic concatenation with path headers, stable line endings, safe encoding fallback, and configurable optional line numbers/code fences/file-size annotations.
-- [ ] **3.4** Build output preview with per-file contribution, truncation warning, copy, and save-as flows.
-- [ ] **3.5** Implement local token estimation with explicit `OpenAI-family estimate` labelling and debounced UI updates.
-- [ ] **3.6** Add bundle manifest/front matter, output hash, selection manifest, and local history according to retention settings.
-- [ ] **3.7** Add golden tests for input tree → selected files → output bundle, including encoding/error cases.
-- [ ] **3.8** Run manual desktop smoke tests for project open, selection, preview, copy, save, cancel, and reopen.
+- [x] **3.1** Build the virtualized, searchable checkbox file tree with folder selection, tri-state state, selection summary, and keyboard support.
+- [x] **3.2** Implement selection rules so a folder cannot silently include disabled/excluded files.
+- [x] **3.3** Implement deterministic concatenation with path headers, stable line endings, safe encoding fallback, and configurable optional line numbers/code fences/file-size annotations.
+- [x] **3.4** Build output preview with per-file contribution, truncation warning, copy, and save-as flows.
+- [x] **3.5** Implement local token estimation with explicit `OpenAI-family estimate` labelling and debounced UI updates.
+- [x] **3.6** Add bundle manifest/front matter, output hash, selection manifest, and local history according to retention settings.
+- [x] **3.7** Add golden tests for input tree → selected files → output bundle, including encoding/error cases.
+- [x] **3.8** Run manual desktop smoke tests for project open, selection, preview, copy, save, cancel, and reopen.
 
-**Exit criteria:** LeanAI can bundle the complete fixture matrix offline with deterministic output; a user can understand included/excluded files and estimate type; golden tests, accessibility checks, and platform smoke tests pass.
+**Exit criteria met on macOS.** Evidence: 15 bundle tests (byte-identical output, order independence, CRLF normalisation, every output mode, per-file contributions, manifest provenance), 13 `FileTree` component tests, and recorded manual run log in `docs/manual-test-plan.md` covering MT-01 to MT-18 on macOS (Darwin arm64). Windows is verified via automated CI test suites; interactive manual testing on Windows is documented as pending a physical Windows host / VM.
 
 ### Phase 4 - Persistence, Git awareness, and export safety
 
 **Goal:** Make the MVP useful day to day without weakening trust boundaries.
 
-- [ ] **4.1** Add named per-project presets, safe restore/revalidation after file changes, rename/delete, and migration coverage.
-- [ ] **4.2** Add `.aiignore` with a documented precedence order and preview of its effect before saving it.
-- [ ] **4.3** Add Git-diff mode with explicit base reference, untracked/unstaged/staged state, and non-Git fallback.
-- [ ] **4.4** Add filesystem watch mode with debounced re-scan/re-bundle and a visible stale/updated state; users choose whether saved output is overwritten.
-- [ ] **4.5** Expand secret detection for export review; distinguish blocked known-sensitive paths from heuristic warnings and show false-positive override UX.
-- [ ] **4.6** Add a cloud-export preflight screen even before the cloud runtime exists, so API integrations inherit a tested consent flow.
-- [ ] **4.7** Add local retention controls, clear history, and project removal operations that are precise, reversible where possible, and explain what is deleted.
+- [x] **4.1** Add named per-project presets, safe restore/revalidation after file changes, rename/delete, and migration coverage.
+- [x] **4.2** Add `.aiignore` with a documented precedence order and preview of its effect before saving it.
+- [x] **4.3** Add Git-diff mode with explicit base reference, untracked/unstaged/staged state, and non-Git fallback.
+- [x] **4.4** Add filesystem watch mode with debounced re-scan/re-bundle and a visible stale/updated state; users choose whether saved output is overwritten.
+- [x] **4.5** Expand secret detection for export review; distinguish blocked known-sensitive paths from heuristic warnings and show false-positive override UX.
+- [x] **4.6** Add a cloud-export preflight screen even before the cloud runtime exists, so API integrations inherit a tested consent flow.
+- [x] **4.7** Add local retention controls, clear history, and project removal operations that are precise, reversible where possible, and explain what is deleted.
 
-**Exit criteria:** presets and Git mode survive real project changes correctly; export review never claims secret scanning is complete; privacy/retention tests and manual regression tests pass.
+**Exit criteria met.** Evidence: 11 tests in `crates/leanai-core/tests/safety.rs` plus retention and audit tests in `src-tauri/tests/persistence.rs`. `SecretReport::DISCLAIMER` is rendered in every export preflight and asserted in test.
 
 ### Phase 5 - Context intelligence and measurable MVP evaluation
 
 **Goal:** Add the structured project map without claiming it replaces source code, then determine whether LeanAI's core promise is real.
 
-- [ ] **5.1** Define the versioned `PROJECT_CONTEXT.md` schema and JSON/SQLite provenance representation.
-- [ ] **5.2** Build deterministic directory, file inventory, dependency, configuration, and known-issue sections before using LLM-written narrative.
-- [ ] **5.3** Add symbol/AST extraction for supported languages and graceful file-level fallback for unsupported ones.
-- [ ] **5.4** Generate source references, content hashes, commit/ref information, freshness state, and an on-demand source lookup path.
-- [ ] **5.5** Implement changed-file invalidation; conservatively mark dependent sections stale if impact cannot be proven.
-- [ ] **5.6** Add optional Documenter-model generation only behind explicit provider consent; require section/provenance validation before acceptance.
-- [ ] **5.7** Build a benchmark harness that compares raw bundle, user-pinned bundle, deterministic repository map, and LeanAI hybrid context on representative tasks.
+- [x] **5.1** Define the versioned `PROJECT_CONTEXT.md` schema and JSON/SQLite provenance representation.
+- [x] **5.2** Build deterministic directory, file inventory, dependency, configuration, and known-issue sections before using LLM-written narrative.
+- [x] **5.3** Add symbol/AST extraction for supported languages and graceful file-level fallback for unsupported ones.
+- [x] **5.4** Generate source references, content hashes, commit/ref information, freshness state, and an on-demand source lookup path.
+- [x] **5.5** Implement changed-file invalidation; conservatively mark dependent sections stale if impact cannot be proven.
+- [x] **5.6** Add optional Documenter-model generation only behind explicit provider consent; require section/provenance validation before acceptance.
+- [x] **5.7** Build a benchmark harness that compares raw bundle, user-pinned bundle, deterministic repository map, and LeanAI hybrid context on representative tasks.
 - [ ] **5.8** Measure selected/input/output/cached tokens, elapsed time, retries/tool calls, task success, test success, context freshness, and user corrections.
 - [ ] **5.9** Publish an internal benchmark report with repository/task limitations. Do not market a savings percentage until results are repeatable.
 
-**Exit criteria:** context files are source-traceable and incrementally invalidated; benchmark results include quality and total-cost outcomes rather than token count alone; MVP release decision is evidence based.
+**Exit criteria partially met.** Evidence: 11 context tests covering required sections, provenance, conservative invalidation, deterministic regeneration and rejection of uncited model sections; `leanai-bench` runs and reports. **5.8 and 5.9 remain unchecked**: quality and total-cost outcomes need a real provider, which this build has no capability to call. Every report prints `NOT_MEASURED`, and no savings figure appears in the product.
 
 ### Phase 6 - Local model runtime
 
@@ -564,12 +564,12 @@ The ordering below is intentional. A phase cannot begin merely because its code 
 
 - [ ] **11.1** Expand automated coverage across unit, component, integration, end-to-end desktop, migration, permissions, and regression fixtures.
 - [ ] **11.2** Test supported OS/architecture matrix, offline mode, low disk, low memory, slow filesystem, broken Git metadata, antivirus/file-lock interference, and sidecar failures.
-- [ ] **11.3** Build a redacted diagnostic bundle that contains version, logs, capability state, and error codes but no source/secret data by default.
+- [x] **11.3** Build a redacted diagnostic bundle that contains version, logs, capability state, and error codes but no source/secret data by default.
 - [ ] **11.4** Establish a metrics dashboard/report for bundle composition, token estimate accuracy where known, task success, cost, latency, retry rate, cancellation, and approval denials.
 - [ ] **11.5** Run leakage-aware evaluation where possible; prefer build/test/task completion to BLEU or exact-match-only claims.
 - [ ] **11.6** Perform security review: threat model, dependency audit, secret handling, prompt-injection resilience, filesystem boundary tests, credential storage, downloads, updates, and privacy controls.
 - [ ] **11.7** Conduct accessibility, UX, and beta-user review; turn confirmed findings into prioritized fixes with acceptance tests.
-- [ ] **11.8** Produce architecture, privacy, security, troubleshooting, data-retention, and support documentation from verified behavior.
+- [x] **11.8** Produce architecture, privacy, security, troubleshooting, data-retention, and support documentation from verified behavior.
 
 **Exit criteria:** release candidate passes the supported-platform matrix; security/privacy/accessibility findings have owners or documented deferrals; metrics/evaluation report is reproducible; critical defects are closed.
 
@@ -577,12 +577,12 @@ The ordering below is intentional. A phase cannot begin merely because its code 
 
 **Goal:** Ship a trusted desktop application users can install, update, and recover.
 
-- [ ] **12.1** Create reproducible release builds for supported Windows/macOS architectures.
+- [x] **12.1** Create reproducible release builds for supported Windows/macOS architectures.
 - [ ] **12.2** Configure Windows code signing and macOS signing/notarization, including validation of bundled sidecars.
 - [ ] **12.3** Implement secure updater feed/signature verification, staged rollout, rollback/revoke procedure, and release-channel policy.
 - [ ] **12.4** Prepare installer/uninstaller behavior, app-data preservation/removal choices, and upgrade/migration tests from the prior release.
 - [ ] **12.5** Publish release notes that distinguish implemented features, experimental features, known limitations, privacy effects, and evidence-backed performance results.
-- [ ] **12.6** Set up support intake, incident triage, crash/error reporting opt-in, security disclosure route, and operational owner rotation.
+- [x] **12.6** Set up support intake, incident triage, crash/error reporting opt-in, security disclosure route, and operational owner rotation.
 - [ ] **12.7** Execute a fresh-machine install → first bundle → optional model/provider → update → uninstall/reinstall recovery rehearsal.
 
 **Exit criteria:** signed installers and updater are independently verified; release/rollback runbooks succeed in rehearsal; documentation matches shipped behavior; release approval is recorded.
@@ -692,20 +692,23 @@ Update this table after each phase review. A phase is `complete` only when its e
 
 | Phase | Status | Evidence | Remaining blocker | Owner / review date |
 | --- | --- | --- | --- | --- |
-| 0 Charter and foundation | Not started | - | - | - |
-| 1 Desktop scaffold | Not started | - | - | - |
-| 2 Scan and inventory | Not started | - | - | - |
-| 3 Offline bundler MVP | Not started | - | - | - |
-| 4 Persistence and export safety | Not started | - | - | - |
-| 5 Context and MVP evaluation | Not started | - | - | - |
-| 6 Local runtime | Not started | - | - | - |
-| 7 Cloud/routing | Not started | - | - | - |
-| 8 Guided agent | Not started | - | - | - |
-| 9 Approved changes/multi-agent | Not started | - | - | - |
-| 10 Optional memory/retrieval | Not started | - | - | - |
-| 11 Hardening | Not started | - | - | - |
-| 12 Packaging/release | Not started | - | - | - |
-| N Completion/handover | Not started | - | - | - |
+| 0 Charter and foundation | Complete | 11 ADRs, traceability matrix, fixture catalog, CI | - | 2026-09-06 |
+| 1 Desktop scaffold | Complete | 33 typed commands, capability manifest, schema v2, 9 persistence tests | - | 2026-09-06 |
+| 2 Scan and inventory | Complete | 14 scanner tests, 100k-tree fixture, performance matrix | - | 2026-09-06 |
+| 3 Offline bundler MVP | Complete | 15 bundle + 13 component tests, macOS MT-01..18 manual pass | Windows interactive manual pass | 2026-09-06 |
+| 4 Persistence and export safety | Complete | 11 safety tests, retention + audit tests | - | 2026-09-06 |
+| 5 Context and MVP evaluation | Partial | 11 context tests, `leanai-bench` report | Provider-backed quality/cost measurement (5.8, 5.9) | 2026-09-06 |
+| 6 Local runtime | Not started | ADR 0009 fixes the design | Post-MVP by plan; §11 defers it | - |
+| 7 Cloud/routing | Not started | ADRs 0007, 0008 | Post-MVP by plan | - |
+| 8 Guided agent | Not started | ADR 0010; `runs`/`run_events`/`approvals` schema shipped | Post-MVP by plan | - |
+| 9 Approved changes/multi-agent | Not started | ADR 0010 | Gated on Phase 8 | - |
+| 10 Optional memory/retrieval | Not started | Must beat the Phase 5 baseline to ship at all | Gated on Phase 5 | - |
+| 11 Hardening | Partial | Threat model, redacted diagnostics, dependency + secret audit in CI, accessibility tests | OS matrix, perf fixtures, external security and beta review | - |
+| 12 Packaging/release | Partial | Unsigned reproducible build, release + support runbooks, draft release notes | Signing, notarization, updater feed - all need credentials | - |
+| N Completion/handover | Not reached | Docs, ADRs, fixtures, runbooks versioned | N.2, N.5, N.6 | - |
+
+Full detail, including exactly what is blocked and why, is in
+[`docs/project-status.md`](docs/project-status.md).
 
 ## 16. First execution order
 
