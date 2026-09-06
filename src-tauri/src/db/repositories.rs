@@ -624,3 +624,341 @@ pub fn delete_provider_config(connection: &Connection, provider_id: &str) -> App
     )?;
     Ok(affected > 0)
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RunRecord {
+    pub id: String,
+    pub project_id: String,
+    pub task: String,
+    pub mode: String,
+    pub context_manifest: serde_json::Value,
+    pub policy: serde_json::Value,
+    pub status: String,
+    pub budget: Option<serde_json::Value>,
+    pub started_at_ms: i64,
+    pub ended_at_ms: Option<i64>,
+    pub validation_state: Option<serde_json::Value>,
+}
+
+pub fn upsert_run(connection: &Connection, record: &RunRecord) -> AppResult<()> {
+    connection.execute(
+        "INSERT INTO runs (id, project_id, task, mode, context_manifest, policy, status, budget, started_at_ms, ended_at_ms, validation_state)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+         ON CONFLICT(id) DO UPDATE SET
+            status = excluded.status,
+            ended_at_ms = excluded.ended_at_ms,
+            validation_state = excluded.validation_state",
+        params![
+            record.id,
+            record.project_id,
+            record.task,
+            record.mode,
+            record.context_manifest.to_string(),
+            record.policy.to_string(),
+            record.status,
+            record.budget.as_ref().map(|b| b.to_string()),
+            record.started_at_ms,
+            record.ended_at_ms,
+            record.validation_state.as_ref().map(|v| v.to_string()),
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn get_run(connection: &Connection, id: &str) -> AppResult<Option<RunRecord>> {
+    let mut statement = connection.prepare(
+        "SELECT id, project_id, task, mode, context_manifest, policy, status, budget, started_at_ms, ended_at_ms, validation_state
+         FROM runs WHERE id = ?1",
+    )?;
+    let row = statement
+        .query_row(params![id], |row| {
+            let manifest_str: String = row.get(4)?;
+            let policy_str: String = row.get(5)?;
+            let budget_str: Option<String> = row.get(7)?;
+            let val_str: Option<String> = row.get(10)?;
+            Ok(RunRecord {
+                id: row.get(0)?,
+                project_id: row.get(1)?,
+                task: row.get(2)?,
+                mode: row.get(3)?,
+                context_manifest: serde_json::from_str(&manifest_str)
+                    .unwrap_or(serde_json::Value::Null),
+                policy: serde_json::from_str(&policy_str).unwrap_or(serde_json::Value::Null),
+                status: row.get(6)?,
+                budget: budget_str.and_then(|s| serde_json::from_str(&s).ok()),
+                started_at_ms: row.get(8)?,
+                ended_at_ms: row.get(9)?,
+                validation_state: val_str.and_then(|s| serde_json::from_str(&s).ok()),
+            })
+        })
+        .optional()?;
+    Ok(row)
+}
+
+pub fn list_runs(
+    connection: &Connection,
+    project_id: &str,
+    limit: u32,
+) -> AppResult<Vec<RunRecord>> {
+    let mut statement = connection.prepare(
+        "SELECT id, project_id, task, mode, context_manifest, policy, status, budget, started_at_ms, ended_at_ms, validation_state
+         FROM runs WHERE project_id = ?1 ORDER BY started_at_ms DESC LIMIT ?2",
+    )?;
+    let rows = statement.query_map(params![project_id, limit], |row| {
+        let manifest_str: String = row.get(4)?;
+        let policy_str: String = row.get(5)?;
+        let budget_str: Option<String> = row.get(7)?;
+        let val_str: Option<String> = row.get(10)?;
+        Ok(RunRecord {
+            id: row.get(0)?,
+            project_id: row.get(1)?,
+            task: row.get(2)?,
+            mode: row.get(3)?,
+            context_manifest: serde_json::from_str(&manifest_str)
+                .unwrap_or(serde_json::Value::Null),
+            policy: serde_json::from_str(&policy_str).unwrap_or(serde_json::Value::Null),
+            status: row.get(6)?,
+            budget: budget_str.and_then(|s| serde_json::from_str(&s).ok()),
+            started_at_ms: row.get(8)?,
+            ended_at_ms: row.get(9)?,
+            validation_state: val_str.and_then(|s| serde_json::from_str(&s).ok()),
+        })
+    })?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn append_run_event(
+    connection: &Connection,
+    run_id: &str,
+    sequence: i64,
+    event_type: &str,
+    payload: &serde_json::Value,
+) -> AppResult<()> {
+    let id = uuid::Uuid::new_v4().to_string();
+    connection.execute(
+        "INSERT INTO run_events (id, run_id, sequence, event_type, redacted_payload, created_at_ms)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        params![
+            id,
+            run_id,
+            sequence,
+            event_type,
+            payload.to_string(),
+            now_ms() as i64
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn list_run_events(connection: &Connection, run_id: &str) -> AppResult<Vec<serde_json::Value>> {
+    let mut statement = connection.prepare(
+        "SELECT sequence, event_type, redacted_payload, created_at_ms
+         FROM run_events WHERE run_id = ?1 ORDER BY sequence ASC",
+    )?;
+    let rows = statement.query_map(params![run_id], |row| {
+        let payload: String = row.get(2)?;
+        Ok(serde_json::json!({
+            "sequence": row.get::<_, i64>(0)?,
+            "eventType": row.get::<_, String>(1)?,
+            "payload": serde_json::from_str::<serde_json::Value>(&payload).unwrap_or(serde_json::Value::Null),
+            "createdAtMs": row.get::<_, i64>(3)?,
+        }))
+    })?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn save_approval(
+    connection: &Connection,
+    req: &leanai_core::approval::ApprovalRequest,
+) -> AppResult<()> {
+    connection.execute(
+        "INSERT INTO approvals (id, run_id, capability, scope, decision, approver, decided_at_ms, expires_at_ms)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+         ON CONFLICT(id) DO UPDATE SET
+            decision = excluded.decision,
+            approver = excluded.approver,
+            decided_at_ms = excluded.decided_at_ms",
+        params![
+            req.id,
+            req.run_id,
+            format!("{:?}", req.capability).to_lowercase(),
+            serde_json::json!({
+                "projectRoot": req.project_root,
+                "affectedPaths": req.affected_paths,
+                "patchHash": req.patch_hash,
+                "token": req.token,
+            }).to_string(),
+            format!("{:?}", req.state).to_lowercase(),
+            req.approver.as_deref().unwrap_or(""),
+            req.decided_at_ms.map(|d| d as i64).unwrap_or(0),
+            req.expires_at_ms as i64,
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn resolve_approval_record(
+    connection: &Connection,
+    id: &str,
+    decision: &str,
+    approver: &str,
+    decided_at_ms: i64,
+) -> AppResult<()> {
+    connection.execute(
+        "UPDATE approvals SET decision = ?2, approver = ?3, decided_at_ms = ?4 WHERE id = ?1",
+        params![id, decision, approver, decided_at_ms],
+    )?;
+    Ok(())
+}
+
+pub fn get_approval(
+    connection: &Connection,
+    id: &str,
+) -> AppResult<Option<leanai_core::approval::ApprovalRequest>> {
+    let mut statement = connection.prepare(
+        "SELECT id, run_id, capability, scope, decision, approver, decided_at_ms, expires_at_ms
+         FROM approvals WHERE id = ?1",
+    )?;
+    let row = statement
+        .query_row(params![id], |row| {
+            let scope_str: String = row.get(3)?;
+            let scope: serde_json::Value =
+                serde_json::from_str(&scope_str).unwrap_or(serde_json::Value::Null);
+            let cap_str: String = row.get(2)?;
+            let capability = if cap_str.contains("write") {
+                leanai_core::agent::ToolCapability::WriteFile
+            } else {
+                leanai_core::agent::ToolCapability::RunAllowlistedCommand
+            };
+            let decision_str: String = row.get(4)?;
+            let state = match decision_str.as_str() {
+                "approved" => leanai_core::approval::DecisionState::Approved,
+                "denied" => leanai_core::approval::DecisionState::Denied,
+                "expired" => leanai_core::approval::DecisionState::Expired,
+                _ => leanai_core::approval::DecisionState::Pending,
+            };
+            Ok(leanai_core::approval::ApprovalRequest {
+                id: row.get(0)?,
+                run_id: row.get(1)?,
+                capability,
+                project_root: scope["projectRoot"].as_str().unwrap_or("").to_string(),
+                affected_paths: scope["affectedPaths"]
+                    .as_array()
+                    .map(|a| {
+                        a.iter()
+                            .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                            .collect()
+                    })
+                    .unwrap_or_default(),
+                patch_hash: scope["patchHash"].as_str().unwrap_or("").to_string(),
+                token: scope["token"].as_str().unwrap_or("").to_string(),
+                created_at_ms: 0,
+                expires_at_ms: row.get::<_, i64>(7)? as u64,
+                state,
+                approver: {
+                    let s: String = row.get(5)?;
+                    if s.is_empty() || s == "pending" {
+                        None
+                    } else {
+                        Some(s)
+                    }
+                },
+                decided_at_ms: {
+                    let ms: i64 = row.get(6)?;
+                    if ms > 0 {
+                        Some(ms as u64)
+                    } else {
+                        None
+                    }
+                },
+            })
+        })
+        .optional()?;
+    Ok(row)
+}
+
+pub fn get_command_allowlist(connection: &Connection, project_id: &str) -> AppResult<Vec<String>> {
+    let mut statement = connection.prepare(
+        "SELECT command_pattern FROM project_command_allowlists WHERE project_id = ?1 ORDER BY command_pattern ASC",
+    )?;
+    let rows = statement.query_map(params![project_id], |row| row.get(0))?;
+    let list: Vec<String> = rows.collect::<Result<Vec<_>, _>>()?;
+    if list.is_empty() {
+        // Default safe allowlist for any standard repo (Instructions §8.6, 9.7)
+        Ok(vec![
+            "cargo test".to_string(),
+            "npm test".to_string(),
+            "npm run test".to_string(),
+            "pytest".to_string(),
+            "vitest run".to_string(),
+        ])
+    } else {
+        Ok(list)
+    }
+}
+
+pub fn set_command_allowlist(
+    connection: &Connection,
+    project_id: &str,
+    commands: &[String],
+) -> AppResult<()> {
+    connection.execute(
+        "DELETE FROM project_command_allowlists WHERE project_id = ?1",
+        params![project_id],
+    )?;
+    for cmd in commands {
+        connection.execute(
+            "INSERT INTO project_command_allowlists (project_id, command_pattern, created_at_ms)
+             VALUES (?1, ?2, ?3)",
+            params![project_id, cmd.trim(), now_ms() as i64],
+        )?;
+    }
+    Ok(())
+}
+
+pub fn save_project_memory(
+    connection: &Connection,
+    entry: &leanai_core::retrieval::EpisodicMemoryEntry,
+    project_id: &str,
+) -> AppResult<()> {
+    connection.execute(
+        "INSERT INTO project_memory (id, project_id, task_summary, relevant_paths, key_findings, created_at_ms, expires_at_ms)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        params![
+            entry.id,
+            project_id,
+            entry.task_summary,
+            serde_json::to_string(&entry.relevant_paths).unwrap_or_else(|_| "[]".to_string()),
+            entry.key_findings,
+            entry.created_at_ms as i64,
+            entry.expires_at_ms as i64,
+        ],
+    )?;
+    Ok(())
+}
+
+pub fn list_project_memory(
+    connection: &Connection,
+    project_id: &str,
+    limit: u32,
+) -> AppResult<Vec<leanai_core::retrieval::EpisodicMemoryEntry>> {
+    let now = now_ms() as i64;
+    let mut statement = connection.prepare(
+        "SELECT id, task_summary, relevant_paths, key_findings, created_at_ms, expires_at_ms
+         FROM project_memory WHERE project_id = ?1 AND expires_at_ms > ?2
+         ORDER BY created_at_ms DESC LIMIT ?3",
+    )?;
+    let rows = statement.query_map(params![project_id, now, limit], |row| {
+        let paths_str: String = row.get(2)?;
+        Ok(leanai_core::retrieval::EpisodicMemoryEntry {
+            id: row.get(0)?,
+            task_summary: row.get(1)?,
+            relevant_paths: serde_json::from_str(&paths_str).unwrap_or_default(),
+            key_findings: row.get(3)?,
+            created_at_ms: row.get::<_, i64>(4)? as u64,
+            expires_at_ms: row.get::<_, i64>(5)? as u64,
+        })
+    })?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}

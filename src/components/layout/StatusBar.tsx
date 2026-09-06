@@ -47,7 +47,7 @@ export function StatusBar() {
               <>
                 <div className="h-3 w-px bg-ink-800" />
                 <div
-                  className="flex items-center gap-1.5 cursor-pointer text-accent hover:text-accent-light transition-colors"
+                  className="flex items-center gap-1.5 cursor-pointer text-ink-200 hover:text-white transition-colors"
                   onClick={() => setRoute("context")}
                   title="Files selected for context bundle"
                 >

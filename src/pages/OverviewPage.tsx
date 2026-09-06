@@ -149,20 +149,20 @@ export function OverviewPage() {
             description="Locally registered projects on this machine."
             badge={<Chip tone="neutral">{recent.length} projects</Chip>}
           >
-            <div className="grid gap-2.5 sm:grid-cols-2">
+            <div className="grid gap-2 sm:grid-cols-2">
               {recent.map((rec) => (
                 <div
                   key={rec.id}
-                  className="flex items-center justify-between rounded-lg border border-ink-800 bg-ink-950/70 p-3 transition-colors hover:border-ink-700"
+                  className="flex items-center justify-between rounded border border-ink-800/80 bg-ink-950/70 p-2.5 transition-colors hover:border-ink-700"
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <FolderIcon size={14} className="text-accent shrink-0" />
+                      <FolderIcon size={13} className="text-ink-400 shrink-0" />
                       <p className="truncate text-xs font-semibold text-ink-100">
                         {rec.displayName}
                       </p>
                     </div>
-                    <p className="mono truncate text-[10px] text-ink-500 mt-1">
+                    <p className="mono truncate text-[10px] text-ink-500 mt-0.5">
                       {rec.canonicalPath}
                     </p>
                   </div>
@@ -185,77 +185,75 @@ export function OverviewPage() {
   const bundledTokens = bundle?.estimate.value ?? 0;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-6">
+    <div className="mx-auto max-w-6xl space-y-5 pb-6">
       {/* Hero Compression Product Moment */}
       <CompressionHero />
 
       {/* Active Project Command Center */}
-      <div className="rounded-xl border border-ink-800 bg-ink-900/90 p-5 shadow-sm backdrop-blur-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-ink-800/80 pb-4">
+      <div className="rounded-lg border border-ink-800/80 bg-ink-900/60 p-4 shadow-2xs">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-ink-800/80 pb-3">
           <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-base font-bold text-white tracking-tight">
-                {project.displayName}
-              </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-sm font-bold text-white tracking-tight">{project.displayName}</h1>
               <Chip tone="info" title="Project fingerprint">
                 {project.fingerprint}
               </Chip>
               {git?.isRepository ? (
                 <Chip tone={git.isDirty ? "warn" : "ok"} dot>
-                  <GitBranchIcon size={12} className="shrink-0" />
+                  <GitBranchIcon size={11} className="shrink-0" />
                   <span>{git.headRef ?? "detached"}</span>
                 </Chip>
               ) : null}
             </div>
-            <p className="mono mt-1 text-[11px] text-ink-400 truncate">{project.canonicalPath}</p>
+            <p className="mono mt-0.5 text-[11px] text-ink-400 truncate">{project.canonicalPath}</p>
           </div>
 
           <div className="flex items-center gap-2">
             <Button variant="default" disabled={scanning} onClick={scan} title="Rescan Project">
-              <RefreshCwIcon size={13} className={scanning ? "animate-spin text-accent" : ""} />
+              <RefreshCwIcon size={12} className={scanning ? "animate-spin text-ink-300" : ""} />
               <span>{scanning ? "Scanning…" : "Rescan"}</span>
             </Button>
 
             <Button variant="primary" onClick={() => setRoute("context")}>
-              <ContextIcon size={14} />
+              <ContextIcon size={13} />
               <span>Context Studio →</span>
             </Button>
           </div>
         </div>
 
         {/* Real-time Project Stat Cards */}
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="mt-3.5 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           <StatCard
             label="Total Files Scanned"
             value={formatNumber(filesSeen)}
             subtext={`${formatNumber(dirsSeen)} directories`}
-            icon={<FolderIcon size={16} />}
+            icon={<FolderIcon size={15} />}
           />
           <StatCard
             label="Repository Weight"
             value={formatBytes(bytesSeen)}
             subtext={`Indexed in ${elapsedMs} ms`}
-            icon={<SparklesIcon size={16} />}
+            icon={<SparklesIcon size={15} />}
           />
           <StatCard
             label="Active Bundle Size"
             value={bundledTokens > 0 ? `~${formatNumber(bundledTokens)}` : "None"}
             subtext={bundledTokens > 0 ? "Ready for agents" : "No files selected"}
-            icon={<ZapIcon size={16} />}
+            icon={<ZapIcon size={15} />}
           />
           <StatCard
             label="Policy Safety Filter"
-            value="100% Offline"
+            value="Offline"
             subtext="Zero secret leakage"
-            icon={<ShieldCheckIcon size={16} />}
+            icon={<ShieldCheckIcon size={15} />}
           />
         </div>
 
         {/* Scan Status progress indicator if scanning */}
         {scanning ? (
-          <div className="mt-4 rounded-lg border border-accent/30 bg-accent/10 p-3 text-xs text-accent">
+          <div className="mt-3 rounded border border-ink-750 bg-ink-950 p-2.5 text-xs text-ink-300">
             <div className="flex items-center gap-2">
-              <RefreshCwIcon size={14} className="animate-spin" />
+              <RefreshCwIcon size={13} className="animate-spin" />
               <span className="font-medium">
                 Scanning repository tree… {formatNumber(scanProgress?.filesSeen ?? 0)} files,{" "}
                 {formatNumber(scanProgress?.directoriesSeen ?? 0)} directories seen.
@@ -266,13 +264,13 @@ export function OverviewPage() {
       </div>
 
       {/* Grid: Agent Fleet Status & Classification Counts */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-5 lg:grid-cols-3">
         {/* Left 2 Cols: Agent Fleet Roster */}
-        <div className="space-y-3 lg:col-span-2">
+        <div className="space-y-2.5 lg:col-span-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <AgentsIcon size={16} className="text-accent" />
-              <h2 className="text-xs font-semibold text-ink-100 uppercase tracking-wider">
+            <div className="flex items-center gap-1.5">
+              <AgentsIcon size={14} className="text-ink-400" />
+              <h2 className="text-xs font-semibold text-ink-200 uppercase tracking-wider">
                 Agent Fleet Roster
               </h2>
             </div>
@@ -281,7 +279,7 @@ export function OverviewPage() {
             </Button>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-2">
             {agents.map((agent) => (
               <AgentCard key={agent.id} agent={agent} onSelect={() => setRoute("tasks")} />
             ))}
@@ -289,15 +287,15 @@ export function OverviewPage() {
         </div>
 
         {/* Right Col: Classification Breakdown */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <SparklesIcon size={16} className="text-accent" />
-            <h2 className="text-xs font-semibold text-ink-100 uppercase tracking-wider">
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-1.5">
+            <SparklesIcon size={14} className="text-ink-400" />
+            <h2 className="text-xs font-semibold text-ink-200 uppercase tracking-wider">
               File Classification
             </h2>
           </div>
 
-          <div className="rounded-xl border border-ink-800 bg-ink-900/90 p-4 shadow-sm">
+          <div className="rounded-lg border border-ink-800/80 bg-ink-900/60 p-3.5 shadow-2xs">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-ink-800 text-left text-[11px] text-ink-400">

@@ -170,17 +170,17 @@ export function ContextBundlerPage() {
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* 3-Pane Studio Layout */}
-      <div className="grid h-full min-h-0 gap-3 lg:grid-cols-[320px_minmax(0,1fr)_340px] xl:grid-cols-[340px_minmax(0,1fr)_360px]">
+      <div className="grid h-full min-h-0 gap-2.5 lg:grid-cols-[300px_minmax(0,1fr)_320px] xl:grid-cols-[320px_minmax(0,1fr)_340px]">
         {/* PANE 1: File Explorer & Presets */}
-        <div className="flex flex-col overflow-hidden rounded-xl border border-ink-800 bg-ink-900/90 shadow-sm backdrop-blur-sm">
+        <div className="flex flex-col overflow-hidden rounded-lg border border-ink-800/80 bg-ink-900/60 shadow-2xs">
           {/* Pane Header */}
-          <div className="border-b border-ink-800/80 p-3 space-y-2">
+          <div className="border-b border-ink-800/80 p-2.5 space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FolderIcon size={14} className="text-accent" />
+              <div className="flex items-center gap-1.5">
+                <FolderIcon size={13} className="text-ink-400" />
                 <h2 className="text-xs font-semibold text-ink-100">Repository Files</h2>
               </div>
-              <span className="mono text-[10px] text-ink-400">
+              <span className="mono text-[10px] text-ink-500">
                 {formatNumber(selectableCount)} / {formatNumber(inventory.files.length)}
               </span>
             </div>
@@ -188,7 +188,7 @@ export function ContextBundlerPage() {
             {/* Search Input */}
             <div className="relative">
               <SearchIcon
-                size={13}
+                size={12}
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-500 pointer-events-none"
               />
               <input
@@ -196,7 +196,7 @@ export function ContextBundlerPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Filter files by path..."
-                className="w-full rounded-md border border-ink-750 bg-ink-950 py-1.5 pl-8 pr-3 text-xs text-ink-100 placeholder:text-ink-500 focus:border-accent focus:outline-hidden"
+                className="w-full rounded border border-ink-750 bg-ink-950 py-1 pl-7 pr-2.5 text-xs text-ink-100 placeholder:text-ink-500 focus:border-ink-600 focus:outline-hidden"
               />
             </div>
 
@@ -228,9 +228,9 @@ export function ContextBundlerPage() {
                 <button
                   type="button"
                   onClick={() => setShowDiffFilter(!showDiffFilter)}
-                  className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium ${
+                  className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition-colors ${
                     showDiffFilter
-                      ? "bg-accent/20 text-accent"
+                      ? "bg-white text-ink-950"
                       : "text-ink-400 hover:bg-ink-800 hover:text-ink-200"
                   }`}
                 >
@@ -256,7 +256,7 @@ export function ContextBundlerPage() {
                               e.target.checked ? [...prev, scope] : prev.filter((s) => s !== scope),
                             )
                           }
-                          className="rounded size-3 accent-accent"
+                          className="rounded size-3 accent-ink-100"
                         />
                         <span className="capitalize">{scope.replace("_", " ")}</span>
                       </label>
@@ -295,7 +295,7 @@ export function ContextBundlerPage() {
           {/* Pane Footer: Selection Count & Presets */}
           <div className="border-t border-ink-800/80 bg-ink-950/60 p-2.5">
             <div className="flex items-center justify-between text-[11px] text-ink-400">
-              <span className="font-semibold text-accent-light">
+              <span className="font-semibold text-white">
                 {formatNumber(selection.files.size)} files selected
               </span>
               <span className="mono">{formatBytes(selectedBytes)}</span>
@@ -339,7 +339,7 @@ export function ContextBundlerPage() {
                       store.setOptions(p.options);
                       store.setNotice(`Applied preset "${p.name}".`);
                     }}
-                    className="rounded border border-ink-800 bg-ink-900 px-1.5 py-0.5 text-[10px] text-ink-300 hover:border-accent hover:text-accent"
+                    className="rounded border border-ink-800 bg-ink-900 px-1.5 py-0.5 text-[10px] text-ink-300 hover:border-ink-700 hover:text-white"
                   >
                     {p.name} ({p.validation?.files.length ?? 0})
                   </button>
@@ -350,33 +350,33 @@ export function ContextBundlerPage() {
         </div>
 
         {/* PANE 2: Live Context Document & Markdown Viewer */}
-        <div className="flex flex-col overflow-hidden rounded-xl border border-ink-800 bg-ink-900/90 shadow-sm backdrop-blur-sm">
+        <div className="flex flex-col overflow-hidden rounded-lg border border-ink-800/80 bg-ink-900/60 shadow-2xs">
           {/* Header with Tabs and Actions */}
-          <div className="flex items-center justify-between border-b border-ink-800/80 px-4 py-2.5 bg-ink-950/50">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between border-b border-ink-800/80 px-3.5 py-2 bg-ink-950/40">
+            <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setCenterTab("bundle")}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                   centerTab === "bundle"
-                    ? "bg-ink-800 text-white shadow-xs"
+                    ? "bg-ink-800 text-white shadow-2xs"
                     : "text-ink-400 hover:text-ink-200"
                 }`}
               >
-                <FileCodeIcon size={13} className="text-accent" />
-                <span>Live Bundle Preview</span>
+                <FileCodeIcon size={12} className="text-ink-300" />
+                <span>Bundle Preview</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setCenterTab("context")}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                   centerTab === "context"
-                    ? "bg-ink-800 text-white shadow-xs"
+                    ? "bg-ink-800 text-white shadow-2xs"
                     : "text-ink-400 hover:text-ink-200"
                 }`}
               >
-                <SparklesIcon size={13} className="text-cyan-400" />
+                <SparklesIcon size={12} className="text-ink-300" />
                 <span>PROJECT_CONTEXT.md</span>
                 {context ? (
                   <span className="size-1.5 rounded-full bg-ok" />
@@ -419,7 +419,7 @@ export function ContextBundlerPage() {
                 />
               ) : building && !bundle ? (
                 <div className="flex h-full items-center justify-center py-20 text-xs text-ink-400">
-                  <RefreshCwIcon size={16} className="animate-spin text-accent mr-2" />
+                  <RefreshCwIcon size={16} className="animate-spin text-ink-300 mr-2" />
                   <span>Synthesizing bundle preview…</span>
                 </div>
               ) : bundle ? (
@@ -494,7 +494,7 @@ export function ContextBundlerPage() {
                                     store.setError(toAppError(err));
                                   }
                                 }}
-                                className="mono rounded border border-ink-800 bg-ink-900 px-1.5 py-0.5 text-[10px] text-accent hover:border-accent"
+                                className="mono rounded border border-ink-800 bg-ink-900 px-1.5 py-0.5 text-[10px] text-ink-300 hover:border-ink-600 hover:text-white transition-colors"
                               >
                                 {ref.path}
                               </button>
@@ -521,7 +521,7 @@ export function ContextBundlerPage() {
         </div>
 
         {/* PANE 3: Token Inspector & Output Settings */}
-        <div className="flex flex-col overflow-y-auto space-y-3 rounded-xl border border-ink-800 bg-ink-900/90 p-3 shadow-sm backdrop-blur-sm">
+        <div className="flex flex-col overflow-y-auto space-y-2.5 rounded-lg border border-ink-800/80 bg-ink-900/60 p-2.5 shadow-2xs">
           {/* Token Gauge with Color Zones */}
           <TokenGauge
             tokens={bundle?.estimate.value ?? 0}
@@ -595,7 +595,7 @@ export function ContextBundlerPage() {
                       </div>
                       <div className="mt-1 h-1 w-full rounded-full bg-ink-800">
                         <div
-                          className="h-full rounded-full bg-accent"
+                          className="h-full rounded-full bg-ink-300"
                           style={{ width: `${Math.max((c.share ?? 0) * 100, 2)}%` }}
                         />
                       </div>
@@ -775,7 +775,7 @@ function ExportPreflightDialog({
               type="checkbox"
               checked={acknowledged}
               onChange={(e) => setAcknowledged(e.target.checked)}
-              className="mt-0.5 size-4 rounded accent-accent"
+              className="mt-0.5 size-4 rounded accent-ink-100"
             />
             <span>
               I understand that the selected files contain potential sensitive credentials. Export

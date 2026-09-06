@@ -177,7 +177,7 @@ export function SelectPage() {
                           : current.filter((value) => value !== scope),
                       )
                     }
-                    className="size-3.5 accent-sky-400"
+                    className="size-3.5 rounded accent-ink-100"
                   />
                   {scope.replace("_", " ")}
                 </label>

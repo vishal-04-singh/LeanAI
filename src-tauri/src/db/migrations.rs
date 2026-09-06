@@ -172,9 +172,34 @@ CREATE TABLE provider_configs (
 "#,
         down: "DROP TABLE provider_configs; DROP TABLE models;",
     },
+    Migration {
+        version: 4,
+        name: "agent_allowlists_and_memory",
+        up: r#"
+CREATE TABLE project_command_allowlists (
+    project_id         TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    command_pattern    TEXT NOT NULL,
+    created_at_ms      INTEGER NOT NULL,
+    PRIMARY KEY (project_id, command_pattern)
+);
+
+CREATE TABLE project_memory (
+    id                 TEXT PRIMARY KEY,
+    project_id         TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    task_summary       TEXT NOT NULL,
+    relevant_paths     TEXT NOT NULL,
+    key_findings       TEXT NOT NULL,
+    created_at_ms      INTEGER NOT NULL,
+    expires_at_ms      INTEGER NOT NULL
+);
+
+CREATE INDEX idx_memory_project ON project_memory(project_id, created_at_ms DESC);
+"#,
+        down: "DROP TABLE project_memory; DROP TABLE project_command_allowlists;",
+    },
 ];
 
-pub const LATEST_VERSION: u32 = 3;
+pub const LATEST_VERSION: u32 = 4;
 
 /// Applies pending migrations inside a transaction each, so a failure leaves
 /// the database at the last good version rather than half-migrated.

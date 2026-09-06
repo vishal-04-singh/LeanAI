@@ -209,7 +209,7 @@ export function PreviewPage() {
                       aria-label={`${(contribution.share * 100).toFixed(1)} percent of the bundle`}
                     >
                       <div
-                        className="h-1 rounded bg-accent"
+                        className="h-1 rounded bg-ink-200"
                         style={{ width: `${Math.max(contribution.share * 100, 1)}%` }}
                       />
                     </div>
@@ -340,7 +340,7 @@ function ExportPreflightDialog({
               type="checkbox"
               checked={acknowledged}
               onChange={(event) => setAcknowledged(event.target.checked)}
-              className="mt-0.5 size-4 accent-sky-400"
+              className="mt-0.5 size-4 rounded accent-ink-100"
             />
             I have reviewed the findings above and want to export these files anyway.
           </label>

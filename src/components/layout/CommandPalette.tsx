@@ -244,23 +244,23 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search Input Bar */}
-        <div className="flex items-center gap-3 border-b border-ink-800 px-4 py-3">
-          <SearchIcon size={16} className="text-accent shrink-0" />
+        <div className="flex items-center gap-3 border-b border-ink-800 px-4 py-2.5">
+          <SearchIcon size={14} className="text-ink-400 shrink-0" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Type a command or jump to screen..."
-            className="w-full bg-transparent text-sm text-ink-100 placeholder:text-ink-500 focus:outline-hidden"
+            className="w-full bg-transparent text-xs text-ink-100 placeholder:text-ink-500 focus:outline-hidden"
             autoFocus
           />
-          <span className="mono rounded border border-ink-750 bg-ink-850 px-1.5 py-0.5 text-[10px] text-ink-400">
+          <span className="mono rounded border border-ink-750 bg-ink-850 px-1.5 py-0.5 text-[9px] text-ink-400">
             ESC
           </span>
         </div>
 
         {/* Command List */}
-        <div className="max-h-80 overflow-y-auto p-2">
+        <div className="max-h-80 overflow-y-auto p-1.5">
           {filtered.length === 0 ? (
             <div className="py-8 text-center text-xs text-ink-500">No commands match "{query}"</div>
           ) : (
@@ -278,23 +278,23 @@ export function CommandPalette({ isOpen, onClose }: { isOpen: boolean; onClose: 
                         onClose();
                       }}
                       onMouseEnter={() => setSelectedIndex(index)}
-                      className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs transition-colors ${
+                      className={`flex w-full items-center justify-between rounded px-2.5 py-1.5 text-xs transition-colors ${
                         isSelected
-                          ? "bg-accent/15 text-accent"
+                          ? "bg-ink-800 text-white font-medium"
                           : "text-ink-300 hover:bg-ink-850 hover:text-ink-100"
                       }`}
                     >
-                      <div className="flex items-center gap-2.5">
-                        <Icon size={14} className={isSelected ? "text-accent" : "text-ink-500"} />
-                        <span className="font-medium">{item.title}</span>
+                      <div className="flex items-center gap-2">
+                        <Icon size={13} className={isSelected ? "text-white" : "text-ink-500"} />
+                        <span>{item.title}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] text-ink-500">{item.category}</span>
                         {item.shortcut ? (
                           <kbd
-                            className={`mono rounded px-1.5 py-0.5 text-[10px] ${
+                            className={`mono rounded px-1.5 py-0.2 text-[9px] ${
                               isSelected
-                                ? "border border-accent/40 bg-accent/20 text-accent-light"
+                                ? "border border-ink-700 bg-ink-750 text-white"
                                 : "border border-ink-800 bg-ink-950 text-ink-400"
                             }`}
                           >

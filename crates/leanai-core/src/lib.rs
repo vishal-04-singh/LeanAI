@@ -9,7 +9,9 @@
 //! The Tauri layer in `src-tauri` adds process, database and UI concerns on top
 //! and holds no policy logic of its own.
 
+pub mod agent;
 pub mod aiignore;
+pub mod approval;
 pub mod benchmark;
 pub mod catalog;
 pub mod classify;
@@ -23,6 +25,7 @@ pub mod manifest;
 pub mod policy;
 pub mod project;
 pub mod provider;
+pub mod retrieval;
 pub mod routing;
 pub mod secrets;
 pub mod selection;

@@ -443,9 +443,13 @@ export type SidecarStatus =
   | { state: "error"; message: string };
 
 export interface ModelPrice {
-  inputUsdPer1M: number;
-  outputUsdPer1M: number;
+  inputUsdPer1m?: number;
+  outputUsdPer1m?: number;
+  cachedInputUsdPer1m?: number;
+  inputUsdPer1M?: number;
+  outputUsdPer1M?: number;
   cachedInputUsdPer1M?: number;
+  currency?: string;
 }
 
 export interface CatalogEntry {
@@ -495,4 +499,198 @@ export interface ProviderStatusResponse {
   providerId: string;
   isConfigured: boolean;
   isStaleCatalog: boolean;
+}
+
+export type AgentRole =
+  "orchestrator" | "planner" | "context_builder" | "coder" | "validator" | "tester";
+
+export type ToolCapability =
+  "read_file" | "inspect_context_index" | "propose_patch" | "write_file" | "execute_command";
+
+export interface Subtask {
+  id: string;
+  title: string;
+  description: string;
+  targetFiles: string[];
+  expectedOutcome: string;
+}
+
+export interface PlanArtifact {
+  objective: string;
+  subtasks: Subtask[];
+  definitionOfSuccess: string;
+}
+
+export interface ContextCitation {
+  relativePath: string;
+  lineRange?: [number, number];
+  sha256: string;
+  estimatedTokens: number;
+}
+
+export interface ContextBuilderArtifact {
+  citations: ContextCitation[];
+  omittedContextReasons: Record<string, string>;
+  totalEstimatedTokens: number;
+}
+
+export interface FilePatch {
+  path: string;
+  unifiedDiff: string;
+  isNewFile: boolean;
+  isDeleted: boolean;
+  linesAdded: number;
+  linesDeleted: number;
+}
+
+export interface PatchProposal {
+  summary: string;
+  rationale: string;
+  affectedFiles: string[];
+  patches: FilePatch[];
+  sha256Hash: string;
+}
+
+export interface ValidationCheck {
+  checkName: string;
+  passed: boolean;
+  message: string;
+  details?: string;
+}
+
+export interface ValidatorVerdict {
+  isValid: boolean;
+  checks: ValidationCheck[];
+  blockerSummary?: string;
+}
+
+export type DecisionState = "pending" | "approved" | "denied" | "timed_out";
+
+export interface ApprovalRequest {
+  approvalId: string;
+  runId: string;
+  requestedCapability: ToolCapability;
+  projectRoot: string;
+  targetPaths: string[];
+  diffHash: string;
+  state: DecisionState;
+  approver?: string;
+  requestedAtMs: number;
+  decidedAtMs?: number;
+  ttlMs: number;
+}
+
+export interface StepRecord {
+  id: string;
+  role: AgentRole;
+  action: string;
+  status: string;
+  tokensUsed: number;
+  timestampMs: number;
+  details: string;
+  evidence?: string;
+}
+
+export interface TesterArtifact {
+  command: string;
+  passed: boolean;
+  exitCode?: number;
+  stdout: string;
+  stderr: string;
+  durationMs: number;
+  timestampMs: number;
+  summary: string;
+}
+
+export interface RunTesterRequest {
+  runId?: string;
+  command: string;
+}
+
+export interface TaskRunResponse {
+  runId: string;
+  status: string;
+  plan: PlanArtifact;
+  contextManifest: ContextBuilderArtifact;
+  patchProposal?: PatchProposal;
+  validatorVerdict: ValidatorVerdict;
+  testerVerdict?: TesterArtifact;
+  pendingApproval?: ApprovalRequest;
+  steps: StepRecord[];
+  startedAtMs: number;
+  endedAtMs?: number;
+}
+
+export interface StartTaskRequest {
+  objective: string;
+  contextFiles: string[];
+  providerModelId?: string;
+  testCommand?: string;
+  maxTokens?: number;
+  maxCostUsd?: number;
+}
+
+export interface ResolveApprovalRequest {
+  approvalId: string;
+  approved: boolean;
+  approver?: string;
+  proposal?: PatchProposal;
+}
+
+export interface ResolveApprovalResponse {
+  approvalId: string;
+  decision: string;
+  patchApplied: boolean;
+  rollbackPerformed: boolean;
+  message: string;
+}
+
+export interface RunRecord {
+  id: string;
+  projectId: string;
+  task: string;
+  mode: string;
+  contextManifest: unknown;
+  policy: unknown;
+  status: string;
+  budget?: unknown;
+  startedAtMs: number;
+  endedAtMs?: number;
+  validationState?: unknown;
+}
+
+export interface TaskDetailResponse {
+  run: RunRecord;
+  events: unknown[];
+}
+
+export interface ProposedFile {
+  path: string;
+  score: number;
+  reasons: string[];
+  sizeBytes: number;
+  estimatedTokens: number;
+}
+
+export interface EpisodicMemoryEntry {
+  id: string;
+  taskSummary: string;
+  relevantPaths: string[];
+  keyFindings: string;
+  createdAtMs: number;
+  expiresAtMs: number;
+}
+
+export interface RetrievalResult {
+  query: string;
+  proposedFiles: ProposedFile[];
+  episodicMemories: EpisodicMemoryEntry[];
+  totalEstimatedTokens: number;
+  rankingDisclaimer: string;
+}
+
+export interface QueryTaskContextRequest {
+  query: string;
+  pinnedPaths?: string[];
+  enabled?: boolean;
 }

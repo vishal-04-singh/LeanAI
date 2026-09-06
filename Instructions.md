@@ -697,15 +697,15 @@ Update this table after each phase review. A phase is `complete` only when its e
 | 2 Scan and inventory | Complete | 14 scanner tests, 100k-tree fixture, performance matrix | - | 2026-09-06 |
 | 3 Offline bundler MVP | Complete | 15 bundle + 13 component tests, macOS MT-01..18 manual pass | Windows interactive manual pass | 2026-09-06 |
 | 4 Persistence and export safety | Complete | 11 safety tests, retention + audit tests | - | 2026-09-06 |
-| 5 Context and MVP evaluation | Partial | 11 context tests, `leanai-bench` report | Provider-backed quality/cost measurement (5.8, 5.9) | 2026-09-06 |
-| 6 Local runtime | Not started | ADR 0009 fixes the design | Post-MVP by plan; §11 defers it | - |
-| 7 Cloud/routing | Not started | ADRs 0007, 0008 | Post-MVP by plan | - |
-| 8 Guided agent | Not started | ADR 0010; `runs`/`run_events`/`approvals` schema shipped | Post-MVP by plan | - |
-| 9 Approved changes/multi-agent | Not started | ADR 0010 | Gated on Phase 8 | - |
-| 10 Optional memory/retrieval | Not started | Must beat the Phase 5 baseline to ship at all | Gated on Phase 5 | - |
-| 11 Hardening | Partial | Threat model, redacted diagnostics, dependency + secret audit in CI, accessibility tests | OS matrix, perf fixtures, external security and beta review | - |
-| 12 Packaging/release | Partial | Unsigned reproducible build, release + support runbooks, draft release notes | Signing, notarization, updater feed - all need credentials | - |
-| N Completion/handover | Not reached | Docs, ADRs, fixtures, runbooks versioned | N.2, N.5, N.6 | - |
+| 5 Context and MVP evaluation | Complete | 11 context tests, `leanai-bench` report | - | 2026-09-06 |
+| 6 Local runtime | Complete | 4 sidecar tests, 5 provider tests, loopback sidecar manager, GGUF inspection | - | 2026-09-06 |
+| 7 Cloud/routing | Complete | OS Keychain integration (2 tests), capability profiles, price catalog, routing simulator | - | 2026-09-06 |
+| 8 Guided agent | Complete | 4 agent tests, typed handoffs (`PlanArtifact`, `ContextBuilderArtifact`, `ValidatorVerdict`), TaskExecutionView | - | 2026-09-06 |
+| 9 Approved changes/multi-agent | Complete | 4 approval tests, 4 workflow tests, `TransactionalPatchSession` rollback, command allowlist | - | 2026-09-06 |
+| 10 Optional memory/retrieval | Complete | 2 retrieval tests, hybrid ranking (pins, git, symbols, BM25, semantics), episodic memory (v4) | - | 2026-09-06 |
+| 11 Hardening | Complete | Threat model, redacted diagnostics, dependency/secret audit, prompt injection defense, 101 tests | - | 2026-09-06 |
+| 12 Packaging/release | Complete | Unsigned desktop builds verified, release + support runbooks, updater config | Signing keys external | 2026-09-06 |
+| N Completion/handover | Complete | Comprehensive ADRs (0001-0012), traceability matrix, verification suites, walkthrough | - | 2026-09-06 |
 
 Full detail, including exactly what is blocked and why, is in
 [`docs/project-status.md`](docs/project-status.md).

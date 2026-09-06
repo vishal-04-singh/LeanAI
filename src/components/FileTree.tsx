@@ -366,7 +366,7 @@ export function FileTree({
                     onToggleDirectory(node.path, event.target.checked, node.selectablePaths)
                   }
                   tabIndex={-1}
-                  className="size-3.5 accent-sky-400"
+                  className="size-3.5 rounded accent-ink-100"
                 />
                 <span className="truncate font-medium text-ink-300">{node.name}/</span>
                 <span className="text-[11px] text-ink-500">{node.selectablePaths.length}</span>
@@ -390,7 +390,7 @@ export function FileTree({
                 }
                 onChange={(event) => onToggleFile(entry.path, event.target.checked)}
                 tabIndex={-1}
-                className="size-3.5 accent-sky-400"
+                className="size-3.5 rounded accent-ink-100"
               />
               <span className={`truncate ${unlocked ? "text-ink-100" : "text-ink-500"}`}>
                 {node.name}
@@ -402,7 +402,7 @@ export function FileTree({
                 <button
                   type="button"
                   onClick={() => onRequestOverride(entry)}
-                  className="text-[11px] text-accent underline decoration-dotted"
+                  className="text-[11px] text-ink-400 underline decoration-dotted hover:text-white transition-colors"
                   tabIndex={-1}
                 >
                   include anyway

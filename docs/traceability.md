@@ -35,11 +35,13 @@ Test ids are `file::test_name`. Run everything with `npm run check:all`.
 | FR-23 | Provider capability profiles, no assumed parity | `provider::CapabilityProfile`, `validate_request_capabilities` | `provider.rs::provider_capability_profile_validates_request_and_rejects_missing_features`, ADR 0008 |
 | FR-24 | Credentials in OS secure storage, never in plaintext history | `keychain::KeychainStore` (macOS Keychain via security CLI, mock for tests), `provider_configs` stores only non-secret flags | `keychain.rs::keychain_store_roundtrip_and_delete`, `persistence.rs::no_table_stores_credentials`, ADR 0007 |
 | FR-25 | Visible routing policy, fallback, budget, audit trail | `routing::route_task`, `RoutingPolicy`, `TaskClass`, `ModelsPage` simulator | `provider.rs::routing_policy_routes_tasks_and_escalates_on_context_exceeded`, ADR 0008 |
-| FR-26 | Task objective, manifest, tools, budget, cancellation | `runs` schema (v2) | ADR 0010. **Deferred to Phase 8** |
-| FR-27 | Agent runs read-only unless a capability is approved | `approvals` schema; no shell/network capability is granted at all | ADR 0002, ADR 0010. **Deferred to Phase 8** |
-| FR-28 | Write-enabled runs produce a reviewable, validated diff | — | ADR 0010. **Deferred to Phase 9** |
-| FR-29 | Structured, cited handoffs between roles | `context::validate_model_section` is the same pattern applied to context | `context.rs::model_sections_are_rejected_without_valid_citations`. **Deferred to Phase 8** |
-| FR-30 | History keeps findings, not full transcripts | `run_events.redacted_payload`, retention default | ADR 0006. **Deferred to Phase 8** |
+| FR-26 | Task objective, manifest, tools, budget, cancellation | `agent::TaskPreflight`, `TaskBudget`, `commands::agent::start_task_run`, `cancel_task_run` | `agent.rs::preflight_validates_objective_root_and_budgets`, `agent_workflow.rs::agent_run_and_event_ledger_roundtrip`, ADR 0010 |
+| FR-27 | Agent runs read-only unless a capability is approved | `agent::ToolCapability`, `approval::ApprovalRequest`, `DecisionState`, `commands::agent::start_task_run` | `agent.rs::preflight_validates_objective_root_and_budgets`, `approval.rs::denied_approval_never_falls_through_to_action`, ADR 0010, ADR 0011 |
+| FR-28 | Write-enabled runs produce a reviewable, validated diff | `approval::TransactionalPatchSession`, `PatchProposal`, `FilePatch`, `commands::agent::resolve_approval` | `approval.rs::transactional_patch_applies_and_rolls_back_cleanly`, `agent_workflow.rs::approval_persistence_and_resolution`, ADR 0011 |
+| FR-29 | Structured, cited handoffs between roles | `agent::PlanArtifact`, `ContextBuilderArtifact`, `ValidatorVerdict`, `validate_proposal` | `agent.rs::context_builder_produces_fresh_provenance_citations`, `agent.rs::validator_rejects_out_of_scope_paths_and_leaked_secrets`, ADR 0011 |
+| FR-30 | History keeps findings, not full transcripts | `RunRecord`, `run_events.redacted_payload`, `EpisodicMemoryEntry`, `project_memory` (Migration 4) | `agent_workflow.rs::command_allowlist_and_episodic_memory`, ADR 0006, ADR 0012 |
+| FR-31 | Tester role with safe allowlisted command execution | `agent::execute_tester_command`, `TesterArtifact`, `commands::agent::run_tester_step`, TaskExecutionView | `tester.rs::*` (7 tests), `agent_workflow.rs::tester_step_event_ledger_and_allowlist`, ADR 0010, ADR 0011 |
+| Retrieval | Hybrid context retrieval (pins, git, symbols, BM25) and episodic memory | `retrieval::rank_context_for_task`, `ProposedFile`, `RetrievalResult`, `commands::agent::query_task_context` | `retrieval.rs::hybrid_retrieval_ranks_by_pins_diffs_and_terms`, `retrieval.rs::disabled_retrieval_falls_back_deterministically_to_pinned_files`, ADR 0012 |
 
 ## Non-functional requirements
 

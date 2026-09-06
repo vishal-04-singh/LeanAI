@@ -358,8 +358,8 @@ export function ModelsPage() {
           </div>
 
           {configuringProvider && (
-            <div className="rounded border border-accent/40 bg-accent/5 p-4 space-y-3">
-              <h4 className="text-xs font-semibold text-accent">
+            <div className="rounded border border-ink-750 bg-ink-950 p-3.5 space-y-2.5">
+              <h4 className="text-xs font-semibold text-white">
                 Configure API Credential for {configuringProvider}
               </h4>
               <p className="text-[11px] text-ink-400">
@@ -460,7 +460,9 @@ export function ModelsPage() {
               <div className="mt-3 rounded border border-ink-700 bg-ink-950 p-3 space-y-1.5 text-xs">
                 <div className="flex justify-between">
                   <span className="text-ink-400">Selected Model:</span>
-                  <span className="font-semibold text-accent">{routingResult.selectedModelId}</span>
+                  <span className="font-semibold text-white font-mono">
+                    {routingResult.selectedModelId}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-ink-400">Provider:</span>
@@ -473,7 +475,7 @@ export function ModelsPage() {
                 <div className="flex justify-between">
                   <span className="text-ink-400">Estimated Cost:</span>
                   <span className="text-ink-200">
-                    {routingResult.estimatedCostUsd !== null
+                    {typeof routingResult.estimatedCostUsd === "number"
                       ? `$${routingResult.estimatedCostUsd.toFixed(5)}`
                       : "N/A"}
                   </span>
@@ -519,7 +521,7 @@ export function ModelsPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-ink-400">Provenance Label:</span>
-                  <span className="text-accent mono text-[11px]">
+                  <span className="text-ink-200 mono text-[11px]">
                     {typeof tokenResult.estimateKind === "string"
                       ? tokenResult.estimateKind
                       : JSON.stringify(tokenResult.estimateKind)}
@@ -550,20 +552,28 @@ export function ModelsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink-800/60">
-                {catalog.entries.map((e) => (
-                  <tr key={e.modelId}>
-                    <td className="py-2 font-medium text-ink-100">{e.displayName}</td>
-                    <td className="py-2">{e.provider}</td>
-                    <td className="py-2">{e.contextCap.toLocaleString()}</td>
-                    <td className="py-2 mono">${e.pricing.inputUsdPer1M.toFixed(2)}</td>
-                    <td className="py-2 mono">${e.pricing.outputUsdPer1M.toFixed(2)}</td>
-                    <td className="py-2 mono">
-                      {e.pricing.cachedInputUsdPer1M !== undefined
-                        ? `$${e.pricing.cachedInputUsdPer1M.toFixed(2)}`
-                        : "—"}
-                    </td>
-                  </tr>
-                ))}
+                {catalog.entries.map((e) => {
+                  const inputRate = e.pricing?.inputUsdPer1m ?? e.pricing?.inputUsdPer1M;
+                  const outputRate = e.pricing?.outputUsdPer1m ?? e.pricing?.outputUsdPer1M;
+                  const cachedRate =
+                    e.pricing?.cachedInputUsdPer1m ?? e.pricing?.cachedInputUsdPer1M;
+                  return (
+                    <tr key={e.modelId}>
+                      <td className="py-2 font-medium text-ink-100">{e.displayName}</td>
+                      <td className="py-2">{e.provider}</td>
+                      <td className="py-2">{e.contextCap.toLocaleString()}</td>
+                      <td className="py-2 mono">
+                        {typeof inputRate === "number" ? `$${inputRate.toFixed(2)}` : "—"}
+                      </td>
+                      <td className="py-2 mono">
+                        {typeof outputRate === "number" ? `$${outputRate.toFixed(2)}` : "—"}
+                      </td>
+                      <td className="py-2 mono">
+                        {typeof cachedRate === "number" ? `$${cachedRate.toFixed(2)}` : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

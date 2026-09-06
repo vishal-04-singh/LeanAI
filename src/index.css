@@ -1,30 +1,30 @@
 @import "tailwindcss";
 
-/* Design System Tokens: Modern AI IDE & Developer Cockpit.
-   Colour never carries meaning on its own: every state that uses colour also
-   carries a text label or an icon glyph (NFR 7.3). */
+/* Premium Minimalist Design Tokens (Linear / Cursor / Raycast inspired).
+   Quiet obsidian & carbon surfaces, crisp high-contrast typography, and restrained semantic accents.
+   Colour never carries meaning on its own (NFR 7.3). */
 @theme {
-  --color-ink-950: #080a0e;
-  --color-ink-900: #0d1117;
-  --color-ink-850: #121620;
-  --color-ink-800: #171d28;
-  --color-ink-750: #1f2737;
-  --color-ink-700: #2b3548;
-  --color-ink-600: #424e65;
-  --color-ink-500: #64748b;
-  --color-ink-400: #94a3b8;
-  --color-ink-300: #cbd5e1;
-  --color-ink-200: #e2e8f0;
-  --color-ink-100: #f8fafc;
+  --color-ink-950: #08080a;
+  --color-ink-900: #0e0e11;
+  --color-ink-850: #131317;
+  --color-ink-800: #1a1a20;
+  --color-ink-750: #22222a;
+  --color-ink-700: #2c2c36;
+  --color-ink-600: #444452;
+  --color-ink-500: #6b6b7b;
+  --color-ink-400: #9393a2;
+  --color-ink-300: #c4c4d0;
+  --color-ink-200: #e2e2ea;
+  --color-ink-100: #f7f7fa;
 
-  --color-accent: #6366f1;
-  --color-accent-hover: #4f46e5;
-  --color-accent-light: #818cf8;
-  --color-cyan: #06b6d4;
-  --color-purple: #a855f7;
+  --color-accent: #f4f4f5;
+  --color-accent-hover: #e4e4e7;
+  --color-accent-light: #ffffff;
+  --color-cyan: #a1a1aa;
+  --color-purple: #a1a1aa;
   --color-warn: #f59e0b;
-  --color-danger: #f43f5e;
-  --color-ok: #10b981;
+  --color-danger: #ef4444;
+  --color-ok: #22c55e;
 }
 
 :root {
@@ -43,37 +43,28 @@ body {
   margin: 0;
   background: var(--color-ink-950);
   color: var(--color-ink-100);
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    "Helvetica Neue",
-    Arial,
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 13px;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.012em;
   -webkit-font-smoothing: antialiased;
 }
 
 /* Accessible focus ring */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--color-ink-100);
   outline-offset: 2px;
 }
 
 .mono {
   font-family:
-    "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-  letter-spacing: -0.02em;
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  letter-spacing: -0.025em;
 }
 
-/* Sleek IDE scrollbars */
+/* Minimal, understated scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -81,25 +72,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.22);
-}
-
-/* Subtle glow accents */
-.glow-accent {
-  box-shadow: 0 0 24px -4px rgba(99, 102, 241, 0.3);
-}
-
-.glow-cyan {
-  box-shadow: 0 0 24px -4px rgba(6, 182, 212, 0.3);
-}
-
-.glow-emerald {
-  box-shadow: 0 0 24px -4px rgba(16, 185, 129, 0.3);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -4,6 +4,7 @@
 //! struct or an `AppError`. No command accepts a free-form string that becomes
 //! a filesystem path, a shell argument or a SQL fragment (backlog 1.2).
 
+pub mod agent;
 pub mod bundles;
 pub mod context;
 pub mod diagnostics;

@@ -187,7 +187,7 @@ function SectionCard({
                     <button
                       type="button"
                       onClick={() => onOpenSource(ref.path)}
-                      className="mono rounded border border-ink-800 px-1.5 py-0.5 text-[11px] text-ink-300 hover:border-accent hover:text-accent"
+                      className="mono rounded border border-ink-800 px-1.5 py-0.5 text-[11px] text-ink-300 hover:border-ink-600 hover:text-white transition-colors"
                     >
                       {ref.path}
                     </button>

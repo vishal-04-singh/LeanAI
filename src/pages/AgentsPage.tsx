@@ -91,14 +91,14 @@ export function AgentsPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-6">
       {/* Top Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-ink-800/80 pb-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-ink-800/80 pb-3">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="flex size-8 items-center justify-center rounded-lg border border-accent/40 bg-accent/15 text-accent shadow-xs">
-              <AgentsIcon size={18} />
+          <div className="flex items-center gap-2">
+            <div className="flex size-7 items-center justify-center rounded border border-ink-750 bg-ink-850 text-ink-300">
+              <AgentsIcon size={14} />
             </div>
             <div>
-              <h1 className="text-base font-bold text-white tracking-tight">
+              <h1 className="text-sm font-bold text-white tracking-tight">
                 Multi-Agent Orchestration Center
               </h1>
               <p className="text-xs text-ink-400">
@@ -114,7 +114,7 @@ export function AgentsPage() {
             6 Agents Online
           </Chip>
           <Button variant="primary" onClick={() => setRoute("tasks")}>
-            <ZapIcon size={13} />
+            <ZapIcon size={12} />
             <span>Launch Task Workspace →</span>
           </Button>
         </div>
@@ -124,7 +124,7 @@ export function AgentsPage() {
       <AgentGraph />
 
       {/* Agent Fleet Roster Grid */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-400">
             Agent Fleet Roster
@@ -134,7 +134,7 @@ export function AgentsPage() {
           </span>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {agents.map((agent) => (
             <AgentCard key={agent.id} agent={agent} onSelect={setSelectedAgent} />
           ))}
@@ -150,16 +150,16 @@ export function AgentsPage() {
           onClick={() => setSelectedAgent(null)}
         >
           <div
-            className="w-full max-w-xl rounded-xl border border-ink-700 bg-ink-900 p-5 shadow-2xl space-y-4"
+            className="w-full max-w-xl rounded-lg border border-ink-750 bg-ink-900 p-5 shadow-2xl space-y-3.5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-lg border border-accent/40 bg-accent/15 text-accent">
-                  <AgentsIcon size={20} />
+              <div className="flex items-center gap-2.5">
+                <div className="flex size-8 items-center justify-center rounded border border-ink-750 bg-ink-850 text-ink-300">
+                  <AgentsIcon size={16} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">{selectedAgent.name}</h3>
+                  <h3 className="text-sm font-semibold text-white">{selectedAgent.name}</h3>
                   <p className="text-xs text-ink-400">{selectedAgent.role}</p>
                 </div>
               </div>
@@ -170,11 +170,11 @@ export function AgentsPage() {
 
             <p className="text-xs leading-relaxed text-ink-200">{selectedAgent.description}</p>
 
-            <div className="rounded-lg border border-ink-800 bg-ink-950 p-3 space-y-2">
+            <div className="rounded border border-ink-800 bg-ink-950 p-3 space-y-2">
               <span className="text-[11px] font-semibold text-ink-300">Model Configuration:</span>
               <div className="flex items-center justify-between text-xs text-ink-400">
                 <span>Model Target:</span>
-                <span className="font-medium text-accent">{selectedAgent.model}</span>
+                <span className="font-medium text-white">{selectedAgent.model}</span>
               </div>
               <div className="flex items-center justify-between text-xs text-ink-400">
                 <span>Temperature:</span>

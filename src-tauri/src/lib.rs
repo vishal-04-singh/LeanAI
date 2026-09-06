@@ -76,6 +76,15 @@ pub fn run() {
             commands::models::get_model_catalog,
             commands::models::route_task,
             commands::models::estimate_provider_tokens,
+            commands::agent::start_task_run,
+            commands::agent::resolve_approval,
+            commands::agent::cancel_task_run,
+            commands::agent::list_task_runs,
+            commands::agent::get_task_run,
+            commands::agent::query_task_context,
+            commands::agent::get_command_allowlist_command,
+            commands::agent::update_command_allowlist_command,
+            commands::agent::run_tester_step,
         ])
         .run(tauri::generate_context!())
         .expect("error while running LeanAI Desktop");

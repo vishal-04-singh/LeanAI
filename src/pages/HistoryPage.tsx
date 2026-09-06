@@ -58,7 +58,7 @@ export function HistoryPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-ink-800/80 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <HistoryIcon size={18} className="text-accent" />
+            <HistoryIcon size={18} className="text-ink-200" />
             <h1 className="text-base font-bold text-white tracking-tight">
               Bundle History & Audit Logs
             </h1>

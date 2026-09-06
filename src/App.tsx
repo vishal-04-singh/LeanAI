@@ -42,7 +42,7 @@ export default function App() {
       {/* Accessible skip link */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-md focus:bg-accent focus:px-3 focus:py-1.5 focus:text-xs focus:text-white"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-md focus:bg-white focus:px-3 focus:py-1.5 focus:text-xs focus:text-ink-950 focus:font-medium focus:shadow-lg"
       >
         Skip to main content
       </a>

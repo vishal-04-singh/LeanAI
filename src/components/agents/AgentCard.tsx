@@ -21,7 +21,7 @@ export function AgentCard({
 }) {
   const statusColors = {
     active: { tone: "ok" as const, label: "Active", dot: true },
-    ready: { tone: "info" as const, label: "Ready", dot: true },
+    ready: { tone: "neutral" as const, label: "Ready", dot: true },
     idle: { tone: "neutral" as const, label: "Idle", dot: false },
   };
 
@@ -29,18 +29,18 @@ export function AgentCard({
 
   return (
     <div
-      className="group relative flex flex-col justify-between rounded-xl border border-ink-800 bg-ink-900/80 p-4 transition-all hover:border-ink-700 hover:bg-ink-900 hover:shadow-md cursor-pointer"
+      className="group flex flex-col justify-between rounded-lg border border-ink-800/80 bg-ink-900/60 p-3.5 transition-colors hover:border-ink-700 hover:bg-ink-900/90 cursor-pointer shadow-2xs"
       onClick={() => onSelect?.(agent)}
     >
       <div>
         {/* Card Header */}
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            <div className="flex size-8 items-center justify-center rounded-lg border border-accent/30 bg-accent/10 text-accent transition-colors group-hover:border-accent/60">
-              <AgentsIcon size={16} />
+          <div className="flex items-center gap-2">
+            <div className="flex size-7 items-center justify-center rounded border border-ink-750 bg-ink-850 text-ink-300">
+              <AgentsIcon size={14} />
             </div>
             <div>
-              <h3 className="text-xs font-semibold text-ink-100 group-hover:text-accent-light transition-colors">
+              <h3 className="text-xs font-semibold text-ink-100 group-hover:text-white transition-colors">
                 {agent.name}
               </h3>
               <p className="text-[11px] text-ink-400">{agent.role}</p>
@@ -52,12 +52,12 @@ export function AgentCard({
         </div>
 
         {/* Description */}
-        <p className="mt-2.5 text-xs leading-relaxed text-ink-300 line-clamp-2">
+        <p className="mt-2 text-xs leading-relaxed text-ink-400 line-clamp-2">
           {agent.description}
         </p>
 
         {/* Capabilities */}
-        <div className="mt-3 flex flex-wrap gap-1">
+        <div className="mt-2.5 flex flex-wrap gap-1">
           {agent.capabilities.map((cap) => (
             <span
               key={cap}
@@ -70,12 +70,14 @@ export function AgentCard({
       </div>
 
       {/* Card Footer: Model & Temperature */}
-      <div className="mt-4 flex items-center justify-between border-t border-ink-800/80 pt-2.5 text-[11px]">
+      <div className="mt-3.5 flex items-center justify-between border-t border-ink-800/80 pt-2 text-[11px]">
         <div className="flex items-center gap-1.5 text-ink-400">
-          <SparklesIcon size={12} className="text-accent" />
+          <SparklesIcon size={11} className="text-ink-400" />
           <span className="font-medium text-ink-300">{agent.model}</span>
         </div>
-        <span className="mono text-[10px] text-ink-500">temp {agent.temperature.toFixed(1)}</span>
+        <span className="mono text-[10px] text-ink-500">
+          temp {typeof agent.temperature === "number" ? agent.temperature.toFixed(1) : "0.0"}
+        </span>
       </div>
     </div>
   );

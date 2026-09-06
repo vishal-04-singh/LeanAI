@@ -36,6 +36,15 @@ import type {
   RoutingDecision,
   TokenCountResult,
   ProviderStatusResponse,
+  TaskRunResponse,
+  StartTaskRequest,
+  ResolveApprovalRequest,
+  ResolveApprovalResponse,
+  RunRecord,
+  TaskDetailResponse,
+  RetrievalResult,
+  TesterArtifact,
+  RunTesterRequest,
 } from "./types";
 import { SCAN_PROGRESS_EVENT } from "./types";
 
@@ -87,6 +96,15 @@ export const COMMANDS = [
   "get_model_catalog",
   "route_task",
   "estimate_provider_tokens",
+  "start_task_run",
+  "resolve_approval",
+  "cancel_task_run",
+  "list_task_runs",
+  "get_task_run",
+  "query_task_context",
+  "get_command_allowlist_command",
+  "update_command_allowlist_command",
+  "run_tester_step",
 ] as const;
 
 export type CommandName = (typeof COMMANDS)[number];
@@ -239,6 +257,23 @@ export const api = {
     call<TokenCountResult>("estimate_provider_tokens", {
       request: { text, providerId, modelName, exactCountOptIn },
     }),
+  startTaskRun: (request: StartTaskRequest) => call<TaskRunResponse>("start_task_run", { request }),
+  resolveApproval: (request: ResolveApprovalRequest) =>
+    call<ResolveApprovalResponse>("resolve_approval", { request }),
+  cancelTaskRun: (runId: string) => call<boolean>("cancel_task_run", { request: { runId } }),
+  listTaskRuns: (limit?: number) =>
+    call<RunRecord[]>("list_task_runs", { request: { limit: limit ?? null } }),
+  getTaskRun: (runId: string) =>
+    call<TaskDetailResponse | null>("get_task_run", { request: { runId } }),
+  queryTaskContext: (query: string, pinnedPaths?: string[], enabled?: boolean) =>
+    call<RetrievalResult>("query_task_context", {
+      request: { query, pinnedPaths: pinnedPaths ?? null, enabled: enabled ?? null },
+    }),
+  getCommandAllowlist: () => call<string[]>("get_command_allowlist_command", { request: {} }),
+  updateCommandAllowlist: (commands: string[]) =>
+    call<void>("update_command_allowlist_command", { request: { commands } }),
+  runTesterStep: (request: RunTesterRequest) =>
+    call<TesterArtifact>("run_tester_step", { request }),
 };
 
 type ResolvedSelectionResponse = import("./types").ResolvedSelection;

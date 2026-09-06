@@ -6,8 +6,11 @@ use crate::provider::{CachedTokenPolicy, CapabilityProfile};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModelPrice {
+    #[serde(alias = "inputUsdPer1M")]
     pub input_usd_per_1m: f64,
+    #[serde(alias = "outputUsdPer1M")]
     pub output_usd_per_1m: f64,
+    #[serde(alias = "cachedInputUsdPer1M")]
     pub cached_input_usd_per_1m: Option<f64>,
     pub currency: String,
 }

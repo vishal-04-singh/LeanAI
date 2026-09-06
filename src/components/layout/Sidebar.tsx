@@ -14,7 +14,7 @@ import {
   TasksIcon,
 } from "../icons";
 
-function HardDriveIcon({ size = 14, className }: { size?: number; className?: string }) {
+function HardDriveIcon({ size = 13, className }: { size?: number; className?: string }) {
   return (
     <svg
       width={size}
@@ -92,7 +92,7 @@ export function Sidebar() {
   const systemNav: NavItem[] = [
     {
       route: "models",
-      label: "Models & Providers",
+      label: "Models & Runtime",
       icon: ModelsIcon,
     },
     {
@@ -109,12 +109,12 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col justify-between border-r border-ink-800/90 bg-ink-900/95 select-none">
+    <aside className="flex w-52 shrink-0 flex-col justify-between border-r border-ink-800/80 bg-ink-950 select-none">
       {/* Navigation Sections */}
-      <div className="flex flex-col gap-5 p-3">
+      <div className="flex flex-col gap-4 p-2.5">
         {/* Workspace Section */}
         <div>
-          <div className="px-2 pb-1.5 text-[10px] font-bold tracking-wider text-ink-500 uppercase">
+          <div className="px-2 pb-1 text-[10px] font-mono uppercase tracking-wider text-ink-500">
             Workspace
           </div>
           <nav aria-label="Workspace navigation" className="flex flex-col gap-0.5">
@@ -130,20 +130,20 @@ export function Sidebar() {
                   onClick={() => setRoute(item.route)}
                   disabled={disabled}
                   aria-current={active ? "page" : undefined}
-                  className={`group relative flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium transition-all ${
+                  className={`group flex items-center justify-between rounded px-2 py-1.5 text-xs font-medium transition-colors ${
                     active
-                      ? "bg-accent/15 text-accent shadow-xs"
+                      ? "bg-ink-850 text-white font-medium shadow-2xs"
                       : disabled
-                        ? "cursor-not-allowed text-ink-600 opacity-60"
-                        : "text-ink-400 hover:bg-ink-850 hover:text-ink-200"
+                        ? "cursor-not-allowed text-ink-600 opacity-50"
+                        : "text-ink-400 hover:bg-ink-900 hover:text-ink-200"
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
                     <Icon
-                      size={15}
+                      size={14}
                       className={
                         active
-                          ? "text-accent"
+                          ? "text-ink-100"
                           : "text-ink-500 group-hover:text-ink-300 transition-colors"
                       }
                     />
@@ -151,15 +151,12 @@ export function Sidebar() {
                   </div>
                   {item.badge !== undefined ? (
                     <span
-                      className={`mono rounded-full px-1.5 py-0.2 text-[10px] font-semibold ${
-                        active ? "bg-accent/30 text-accent" : "bg-ink-800 text-ink-400"
+                      className={`mono rounded px-1.5 py-0.2 text-[9px] font-medium ${
+                        active ? "bg-ink-750 text-ink-200" : "bg-ink-900 text-ink-500"
                       }`}
                     >
                       {item.badge}
                     </span>
-                  ) : null}
-                  {active ? (
-                    <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-r bg-accent" />
                   ) : null}
                 </button>
               );
@@ -169,8 +166,8 @@ export function Sidebar() {
 
         {/* System Section */}
         <div>
-          <div className="px-2 pb-1.5 text-[10px] font-bold tracking-wider text-ink-500 uppercase">
-            System & Runtime
+          <div className="px-2 pb-1 text-[10px] font-mono uppercase tracking-wider text-ink-500">
+            System
           </div>
           <nav aria-label="System navigation" className="flex flex-col gap-0.5">
             {systemNav.map((item) => {
@@ -183,26 +180,23 @@ export function Sidebar() {
                   type="button"
                   onClick={() => setRoute(item.route)}
                   aria-current={active ? "page" : undefined}
-                  className={`group relative flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium transition-all ${
+                  className={`group flex items-center justify-between rounded px-2 py-1.5 text-xs font-medium transition-colors ${
                     active
-                      ? "bg-accent/15 text-accent shadow-xs"
-                      : "text-ink-400 hover:bg-ink-850 hover:text-ink-200"
+                      ? "bg-ink-850 text-white font-medium shadow-2xs"
+                      : "text-ink-400 hover:bg-ink-900 hover:text-ink-200"
                   }`}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-2">
                     <Icon
-                      size={15}
+                      size={14}
                       className={
                         active
-                          ? "text-accent"
+                          ? "text-ink-100"
                           : "text-ink-500 group-hover:text-ink-300 transition-colors"
                       }
                     />
                     <span>{item.label}</span>
                   </div>
-                  {active ? (
-                    <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-r bg-accent" />
-                  ) : null}
                 </button>
               );
             })}
@@ -211,40 +205,40 @@ export function Sidebar() {
       </div>
 
       {/* Sidebar Footer: System Status */}
-      <div className="border-t border-ink-800/80 p-3 space-y-2">
+      <div className="border-t border-ink-800/80 p-2.5 space-y-1.5">
         {/* Local Sidecar Status */}
         <div
-          className="flex cursor-pointer items-center justify-between rounded-md border border-ink-800/80 bg-ink-950/60 p-2 text-xs transition-colors hover:border-ink-700"
+          className="flex cursor-pointer items-center justify-between rounded border border-ink-800/70 bg-ink-900/40 p-2 text-xs hover:border-ink-700 transition-colors"
           onClick={() => setRoute("models")}
-          title="Local llama-server sidecar runtime status"
+          title="Local Sidecar Runtime"
         >
-          <div className="flex items-center gap-2">
-            <HardDriveIcon size={13} className="text-ink-400" />
-            <span className="text-[11px] text-ink-300">Local Sidecar</span>
+          <div className="flex items-center gap-1.5 text-ink-400">
+            <HardDriveIcon size={12} />
+            <span className="text-[11px]">Sidecar</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span
-              className={`size-2 rounded-full ${
+              className={`size-1.5 rounded-full ${
                 sidecarStatus.state === "ready"
-                  ? "bg-ok animate-pulse"
+                  ? "bg-ok"
                   : sidecarStatus.state === "starting"
-                    ? "bg-warn animate-spin"
+                    ? "bg-warn"
                     : "bg-ink-600"
               }`}
             />
-            <span className="mono text-[10px] text-ink-400 capitalize">
-              {sidecarStatus.state === "ready" ? `Port ${sidecarStatus.port}` : sidecarStatus.state}
+            <span className="mono text-[10px] text-ink-400">
+              {sidecarStatus.state === "ready" ? `:${sidecarStatus.port}` : sidecarStatus.state}
             </span>
           </div>
         </div>
 
         {/* OS Keychain Status */}
-        <div className="flex items-center justify-between px-1 text-[11px] text-ink-500">
-          <div className="flex items-center gap-1.5">
-            <ShieldCheckIcon size={12} className="text-ok" />
-            <span>macOS Keychain</span>
+        <div className="flex items-center justify-between px-1 text-[10px] text-ink-500">
+          <div className="flex items-center gap-1">
+            <ShieldCheckIcon size={11} className="text-ok" />
+            <span>OS Keychain</span>
           </div>
-          <span className="text-[10px] text-ok">Secured</span>
+          <span className="mono text-ok">Secured</span>
         </div>
       </div>
     </aside>

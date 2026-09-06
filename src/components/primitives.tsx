@@ -26,14 +26,13 @@ export function Button({
   };
 
   const variantStyles: Record<string, string> = {
-    default:
-      "bg-ink-850 hover:bg-ink-800 text-ink-200 hover:text-ink-100 border border-ink-750 hover:border-ink-700 shadow-xs",
     primary:
-      "bg-accent hover:bg-accent-hover text-white border border-accent-light/30 shadow-xs glow-accent font-medium",
+      "bg-white hover:bg-ink-200 text-ink-950 font-medium border border-transparent shadow-xs active:bg-ink-300",
+    default:
+      "bg-ink-850 hover:bg-ink-800 text-ink-200 hover:text-white border border-ink-750 hover:border-ink-700 shadow-xs",
     secondary:
-      "bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-xs",
-    danger:
-      "bg-danger/10 hover:bg-danger/20 text-danger border border-danger/30 hover:border-danger/50 shadow-xs",
+      "bg-ink-800 hover:bg-ink-750 text-ink-200 hover:text-white border border-ink-700 shadow-xs",
+    danger: "bg-danger/10 hover:bg-danger/20 text-danger border border-danger/30 shadow-xs",
     ghost:
       "bg-transparent hover:bg-ink-850 text-ink-400 hover:text-ink-200 border border-transparent",
   };
@@ -44,7 +43,7 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={`inline-flex items-center justify-center rounded-md transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-inherit disabled:hover:bg-inherit ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-md font-medium transition-all duration-100 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:border-inherit disabled:hover:bg-inherit ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
     >
       {children}
     </button>
@@ -68,16 +67,16 @@ export function Panel({
 }) {
   return (
     <section
-      className={`rounded-lg border border-ink-800 bg-ink-900/90 shadow-sm backdrop-blur-sm ${className}`}
+      className={`rounded-lg border border-ink-800/80 bg-ink-900/60 shadow-2xs ${className}`}
     >
-      <header className="flex items-start justify-between gap-4 border-b border-ink-800/80 px-4 py-3">
+      <header className="flex items-start justify-between gap-4 border-b border-ink-800/60 px-4 py-2.5 bg-ink-950/30">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="text-xs font-semibold tracking-tight text-ink-100">{title}</h2>
+            <h2 className="text-xs font-semibold text-ink-100">{title}</h2>
             {badge ? <div>{badge}</div> : null}
           </div>
           {description ? (
-            <div className="mt-0.5 text-[11px] leading-relaxed text-ink-400">{description}</div>
+            <div className="mt-0.5 text-[11px] text-ink-400 leading-normal">{description}</div>
           ) : null}
         </div>
         {actions ? <div className="flex shrink-0 items-center gap-1.5">{actions}</div> : null}
@@ -106,28 +105,28 @@ export function Chip({
 }) {
   const tones = {
     neutral: {
-      badge: "border-ink-750 bg-ink-850/80 text-ink-300",
-      dot: "bg-ink-400",
+      badge: "border-ink-800 bg-ink-850/80 text-ink-400",
+      dot: "bg-ink-500",
     },
     ok: {
-      badge: "border-ok/30 bg-ok/10 text-ok",
+      badge: "border-ok/30 bg-ok/5 text-ok",
       dot: "bg-ok",
     },
     warn: {
-      badge: "border-warn/30 bg-warn/10 text-warn",
+      badge: "border-warn/30 bg-warn/5 text-warn",
       dot: "bg-warn",
     },
     danger: {
-      badge: "border-danger/30 bg-danger/10 text-danger",
+      badge: "border-danger/30 bg-danger/5 text-danger",
       dot: "bg-danger",
     },
     info: {
-      badge: "border-cyan/30 bg-cyan/10 text-cyan-400",
-      dot: "bg-cyan-400",
+      badge: "border-ink-750 bg-ink-850/90 text-ink-300",
+      dot: "bg-ink-300",
     },
     purple: {
-      badge: "border-accent/30 bg-accent/10 text-accent-light",
-      dot: "bg-accent",
+      badge: "border-ink-750 bg-ink-850/90 text-ink-300",
+      dot: "bg-ink-300",
     },
   };
 
@@ -136,7 +135,7 @@ export function Chip({
   return (
     <span
       title={title}
-      className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap shadow-2xs ${activeTone.badge} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded border px-1.5 py-0.5 text-[11px] font-medium whitespace-nowrap ${activeTone.badge} ${className}`}
     >
       {dot ? <span className={`size-1.5 rounded-full ${activeTone.dot}`} /> : null}
       {children}
@@ -156,13 +155,13 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-ink-800 bg-ink-900/40 px-6 py-12 text-center">
+    <div className="flex flex-col items-center justify-center gap-2.5 rounded-lg border border-dashed border-ink-800 bg-ink-900/30 px-6 py-12 text-center">
       {icon ? (
-        <div className="flex size-10 items-center justify-center rounded-lg border border-ink-800 bg-ink-850 text-ink-300 shadow-inner">
+        <div className="flex size-9 items-center justify-center rounded-md border border-ink-750 bg-ink-850 text-ink-300">
           {icon}
         </div>
       ) : null}
-      <h3 className="text-sm font-semibold tracking-tight text-ink-100">{title}</h3>
+      <h3 className="text-xs font-semibold text-ink-100">{title}</h3>
       <p className="max-w-md text-xs leading-relaxed text-ink-400">{body}</p>
       {action ? <div className="mt-1">{action}</div> : null}
     </div>
@@ -183,13 +182,13 @@ export function StatCard({
   icon?: ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-lg border border-ink-800 bg-ink-900/80 p-3.5 shadow-xs transition-colors hover:border-ink-750">
+    <div className="rounded-lg border border-ink-800/80 bg-ink-900/60 p-3 shadow-2xs transition-colors hover:border-ink-700">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-medium text-ink-400">{label}</p>
+        <p className="text-[11px] text-ink-400 font-medium">{label}</p>
         {icon ? <div className="text-ink-500">{icon}</div> : badge}
       </div>
-      <div className="mt-1.5 text-base font-semibold tracking-tight text-ink-100">{value}</div>
-      {subtext ? <p className="mt-0.5 text-[11px] text-ink-500">{subtext}</p> : null}
+      <div className="mt-1 text-sm font-semibold text-ink-100 tracking-tight">{value}</div>
+      {subtext ? <p className="mt-0.5 text-[10px] text-ink-500">{subtext}</p> : null}
     </div>
   );
 }
@@ -208,11 +207,11 @@ export function ProgressBar({
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
 
   const colors: Record<string, string> = {
-    accent: "bg-accent",
+    accent: "bg-ink-100",
     ok: "bg-ok",
     warn: "bg-warn",
     danger: "bg-danger",
-    cyan: "bg-cyan-500",
+    cyan: "bg-ink-200",
   };
 
   return (
@@ -220,12 +219,12 @@ export function ProgressBar({
       {label ? (
         <div className="mb-1 flex justify-between text-[11px] text-ink-400">
           <span>{label}</span>
-          <span className="mono font-medium text-ink-300">{percentage.toFixed(0)}%</span>
+          <span className="mono font-medium text-ink-200">{percentage.toFixed(0)}%</span>
         </div>
       ) : null}
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink-800">
         <div
-          className={`h-full rounded-full transition-all duration-300 ${colors[color]}`}
+          className={`h-full rounded-full transition-all duration-200 ${colors[color]}`}
           style={{ width: `${percentage}%` }}
         />
       </div>
@@ -243,10 +242,10 @@ export function Field({
   children: ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1.5">
+    <label className="flex flex-col gap-1">
       <span className="text-xs font-medium text-ink-300">{label}</span>
       {children}
-      {hint ? <span className="text-[11px] leading-normal text-ink-500">{hint}</span> : null}
+      {hint ? <span className="text-[11px] text-ink-500 leading-normal">{hint}</span> : null}
     </label>
   );
 }
@@ -263,17 +262,17 @@ export function Toggle({
   hint?: string;
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-2.5 py-1">
+    <label className="flex cursor-pointer items-start gap-2 py-1">
       <input
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="mt-0.5 size-4 rounded accent-accent"
+        className="mt-0.5 size-3.5 rounded accent-ink-100"
       />
       <span>
-        <span className="text-xs font-medium text-ink-200">{label}</span>
+        <span className="text-xs text-ink-200">{label}</span>
         {hint ? (
-          <span className="block text-[11px] leading-relaxed text-ink-500">{hint}</span>
+          <span className="block text-[11px] text-ink-500 leading-normal">{hint}</span>
         ) : null}
       </span>
     </label>
