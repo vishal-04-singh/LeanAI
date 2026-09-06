@@ -398,3 +398,101 @@ export interface ScanProgress {
 }
 
 export const SCAN_PROGRESS_EVENT = "leanai://scan-progress";
+
+export type CachedTokenPolicy = "none" | "prompt_prefix" | "automatic";
+
+export interface CapabilityProfile {
+  contextCap: number;
+  streaming: boolean;
+  toolCalling: boolean;
+  structuredOutput: boolean;
+  vision: boolean;
+  exactTokenCounting: boolean;
+  cachedTokenPolicy: CachedTokenPolicy;
+}
+
+export interface ModelRecord {
+  id: string;
+  kind: string;
+  displayName: string;
+  source: string;
+  version: string;
+  filePath: string | null;
+  capabilityProfile: CapabilityProfile;
+  checksum: string | null;
+  status: string;
+  createdAtMs: number;
+  updatedAtMs: number;
+}
+
+export interface ProviderConfig {
+  providerId: string;
+  displayName: string;
+  accountLabel: string;
+  isConfigured: boolean;
+  priceCatalogVer: string;
+  enabled: boolean;
+  updatedAtMs: number;
+}
+
+export type SidecarStatus =
+  | { state: "stopped" }
+  | { state: "starting"; port: number; modelId: string }
+  | { state: "ready"; port: number; pid: number; modelId: string; displayName: string }
+  | { state: "stopping" }
+  | { state: "error"; message: string };
+
+export interface ModelPrice {
+  inputUsdPer1M: number;
+  outputUsdPer1M: number;
+  cachedInputUsdPer1M?: number;
+}
+
+export interface CatalogEntry {
+  modelId: string;
+  displayName: string;
+  provider: string;
+  contextCap: number;
+  pricing: ModelPrice;
+  capabilities: CapabilityProfile;
+}
+
+export interface PriceCatalog {
+  version: string;
+  updatedAtMs: number;
+  updateSource: string;
+  entries: CatalogEntry[];
+}
+
+export type TaskClass =
+  | "file_inventory"
+  | "context_documentation"
+  | "multi_file_planning"
+  | "code_change_proposal"
+  | "mechanical_validation";
+
+export type RoutingReason =
+  | "task_default_low_cost"
+  | "task_requires_strong_reasoning"
+  | "escalated_context_exceeded_low_cost_cap"
+  | "local_only_enforced";
+
+export interface RoutingDecision {
+  taskClass: TaskClass;
+  selectedModelId: string;
+  selectedProvider: string;
+  reason: RoutingReason;
+  explanation: string;
+  estimatedCostUsd: number | null;
+}
+
+export interface TokenCountResult {
+  count: number;
+  estimateKind: { [key: string]: unknown } | string;
+}
+
+export interface ProviderStatusResponse {
+  providerId: string;
+  isConfigured: boolean;
+  isStaleCatalog: boolean;
+}

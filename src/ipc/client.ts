@@ -28,6 +28,14 @@ import type {
   Settings,
   SourceOnDemandResponse,
   TriState,
+  ModelRecord,
+  ProviderConfig,
+  SidecarStatus,
+  PriceCatalog,
+  TaskClass,
+  RoutingDecision,
+  TokenCountResult,
+  ProviderStatusResponse,
 } from "./types";
 import { SCAN_PROGRESS_EVENT } from "./types";
 
@@ -66,6 +74,19 @@ export const COMMANDS = [
   "describe_policy",
   "reset_settings",
   "diagnostics",
+  "list_models",
+  "register_local_model",
+  "unregister_model",
+  "start_local_model",
+  "stop_local_model",
+  "local_model_status",
+  "list_providers",
+  "configure_provider_credential",
+  "disconnect_provider",
+  "check_provider_status",
+  "get_model_catalog",
+  "route_task",
+  "estimate_provider_tokens",
 ] as const;
 
 export type CommandName = (typeof COMMANDS)[number];
@@ -172,6 +193,52 @@ export const api = {
   describePolicy: () => call<PolicyDescription>("describe_policy"),
   resetSettings: () => call<Settings>("reset_settings"),
   diagnostics: () => call<Diagnostics>("diagnostics"),
+
+  listModels: () => call<ModelRecord[]>("list_models"),
+  registerLocalModel: (displayName: string, filePath: string, contextCap?: number) =>
+    call<ModelRecord>("register_local_model", {
+      request: { displayName, filePath, contextCap: contextCap ?? null },
+    }),
+  unregisterModel: (id: string) => call<boolean>("unregister_model", { request: { id } }),
+  startLocalModel: (id: string, contextSize?: number) =>
+    call<SidecarStatus>("start_local_model", {
+      request: { id, contextSize: contextSize ?? null },
+    }),
+  stopLocalModel: () => call<SidecarStatus>("stop_local_model"),
+  localModelStatus: () => call<SidecarStatus>("local_model_status"),
+  listProviders: () => call<ProviderConfig[]>("list_providers"),
+  configureProviderCredential: (providerId: string, accountLabel: string, secret: string) =>
+    call<ProviderConfig>("configure_provider_credential", {
+      request: { providerId, accountLabel, secret },
+    }),
+  disconnectProvider: (providerId: string) =>
+    call<ProviderConfig>("disconnect_provider", { request: { providerId } }),
+  checkProviderStatus: (providerId: string) =>
+    call<ProviderStatusResponse>("check_provider_status", { request: { providerId } }),
+  getModelCatalog: () => call<PriceCatalog>("get_model_catalog"),
+  routeTask: (
+    taskClass: TaskClass,
+    estimatedTokens: number,
+    budgetUsd?: number,
+    requireLocalOnly?: boolean,
+  ) =>
+    call<RoutingDecision>("route_task", {
+      request: {
+        taskClass,
+        estimatedTokens,
+        budgetUsd: budgetUsd ?? null,
+        requireLocalOnly: requireLocalOnly ?? null,
+      },
+    }),
+  estimateProviderTokens: (
+    text: string,
+    providerId: string,
+    modelName: string,
+    exactCountOptIn: boolean,
+  ) =>
+    call<TokenCountResult>("estimate_provider_tokens", {
+      request: { text, providerId, modelName, exactCountOptIn },
+    }),
 };
 
 type ResolvedSelectionResponse = import("./types").ResolvedSelection;

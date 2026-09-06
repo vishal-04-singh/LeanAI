@@ -195,4 +195,3 @@ describe("FileTree", () => {
     expect(screen.queryByText("module_0.ts")).not.toBeInTheDocument();
   });
 });
-

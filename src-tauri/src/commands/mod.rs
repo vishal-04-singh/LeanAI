@@ -7,6 +7,7 @@
 pub mod bundles;
 pub mod context;
 pub mod diagnostics;
+pub mod models;
 pub mod projects;
 pub mod settings;
 

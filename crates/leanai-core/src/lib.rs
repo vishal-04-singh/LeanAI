@@ -11,15 +11,19 @@
 
 pub mod aiignore;
 pub mod benchmark;
+pub mod catalog;
 pub mod classify;
 pub mod concat;
 pub mod context;
 pub mod error;
+pub mod gguf;
 pub mod gitinfo;
 pub mod inventory;
 pub mod manifest;
 pub mod policy;
 pub mod project;
+pub mod provider;
+pub mod routing;
 pub mod secrets;
 pub mod selection;
 pub mod symbols;

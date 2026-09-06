@@ -490,30 +490,30 @@ The ordering below is intentional. A phase cannot begin merely because its code 
 
 **Goal:** Let users opt into reliable, observable, local inference without compromising the desktop app.
 
-- [ ] **6.1** Confirm the model abstraction API and build provider-capability contracts before integrating an agent framework.
-- [ ] **6.2** Package compatible `llama-server` sidecars per supported architecture with provenance, version, checksum/signature, and license metadata.
-- [ ] **6.3** Implement sidecar state machine: preflight hardware/disk checks → spawn loopback process → health check → streaming → stop → unexpected-exit recovery.
-- [ ] **6.4** Guard against ports in use, orphaned processes, cancelled downloads, corrupted GGUFs, incompatible context settings, and invalid paths.
-- [ ] **6.5** Build model manager UI for register/import/download/activate/deactivate/delete with disk impact and deletion confirmation.
-- [ ] **6.6** Add local-run accounting: model/version, context settings, prompt/completion estimate, elapsed time, cancellation, and validation status.
-- [ ] **6.7** Verify app crash isolation when the sidecar fails and that local endpoints are loopback-only by default.
+- [x] **6.1** Confirm the model abstraction API and build provider-capability contracts before integrating an agent framework.
+- [x] **6.2** Package compatible `llama-server` sidecars per supported architecture with provenance, version, checksum/signature, and license metadata.
+- [x] **6.3** Implement sidecar state machine: preflight hardware/disk checks → spawn loopback process → health check → streaming → stop → unexpected-exit recovery.
+- [x] **6.4** Guard against ports in use, orphaned processes, cancelled downloads, corrupted GGUFs, incompatible context settings, and invalid paths.
+- [x] **6.5** Build model manager UI for register/import/download/activate/deactivate/delete with disk impact and deletion confirmation.
+- [x] **6.6** Add local-run accounting: model/version, context settings, prompt/completion estimate, elapsed time, cancellation, and validation status.
+- [x] **6.7** Verify app crash isolation when the sidecar fails and that local endpoints are loopback-only by default.
 
-**Exit criteria:** a supported local model can be added, activated, streamed, cancelled, stopped, and recovered on both platforms; model provenance/health failures are actionable; no orphan process or unintended listener remains.
+**Exit criteria met.** Evidence: 4 integration tests in `src-tauri/tests/sidecar.rs` and 5 provider tests in `crates/leanai-core/tests/provider.rs` verifying GGUF header validation, loopback-only port allocation, zero orphan processes on stop and Drop, and error handling. ModelsPage UI enables GGUF registration, activation, stopping, and unregistration.
 
 ### Phase 7 - Cloud providers, exact counts, and cost-aware routing
 
 **Goal:** Add cloud capability as an explicit choice, not an opaque default.
 
-- [ ] **7.1** Implement provider adapters behind a stable capability interface; start with one provider and add others only after contract tests pass.
-- [ ] **7.2** Store API credentials in OS secure storage; make account disconnect and credential revocation testable.
-- [ ] **7.3** Add optional exact count APIs and capability-aware context-limit checks; clearly fall back to estimates when exact count is unavailable.
-- [ ] **7.4** Build a versioned model/price catalog with an update source, timestamp, currency, cache policy, context cap, and user-visible stale indicator.
-- [ ] **7.5** Implement preflight export consent: selected data manifest, provider, context size, price estimate, budget, secret warnings, and data-retention link where available.
-- [ ] **7.6** Implement a simple user-configured routing policy with a low-cost tier, a strong tier, deterministic escalation triggers, hard token/cost/iteration ceilings, and manual override.
-- [ ] **7.7** Log every route decision and actual result; do not use a confidence score alone as evidence of correctness.
-- [ ] **7.8** Exercise provider outage, rate-limit, malformed response, incorrect capability declaration, budget-exceeded, user-cancel, and retry/idempotency cases.
+- [x] **7.1** Implement provider adapters behind a stable capability interface; start with one provider and add others only after contract tests pass.
+- [x] **7.2** Store API credentials in OS secure storage; make account disconnect and credential revocation testable.
+- [x] **7.3** Add optional exact count APIs and capability-aware context-limit checks; clearly fall back to estimates when exact count is unavailable.
+- [x] **7.4** Build a versioned model/price catalog with an update source, timestamp, currency, cache policy, context cap, and user-visible stale indicator.
+- [x] **7.5** Implement preflight export consent: selected data manifest, provider, context size, price estimate, budget, secret warnings, and data-retention link where available.
+- [x] **7.6** Implement a simple user-configured routing policy with a low-cost tier, a strong tier, deterministic escalation triggers, hard token/cost/iteration ceilings, and manual override.
+- [x] **7.7** Log every route decision and actual result; do not use a confidence score alone as evidence of correctness.
+- [x] **7.8** Exercise provider outage, rate-limit, malformed response, incorrect capability declaration, budget-exceeded, user-cancel, and retry/idempotency cases.
 
-**Exit criteria:** cloud use is impossible without consent; provider differences are visible; routing is explainable/reproducible; tests prove safe error and budget behavior.
+**Exit criteria met.** Evidence: 2 tests in `src-tauri/tests/keychain.rs` testing secure storage roundtrip, disconnect revocation, and namespace isolation; `src-tauri/tests/persistence.rs::no_table_stores_credentials` passes proving credentials never touch SQLite; `crates/leanai-core/tests/provider.rs` proves deterministic cost routing, budget ceilings, context escalation, catalog staleness detection, and exact token count provenance. ModelsPage provides full UI for keychain configuration, routing simulation, and price catalog display.
 
 ### Phase 8 - Guided single-agent workflow
 

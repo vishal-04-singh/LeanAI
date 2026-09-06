@@ -15,7 +15,17 @@ import type {
   Settings,
 } from "../ipc/types";
 
-export type Route = "workspace" | "select" | "preview" | "context" | "settings";
+export type Route =
+  | "overview"
+  | "context"
+  | "agents"
+  | "tasks"
+  | "history"
+  | "models"
+  | "settings"
+  | "workspace"
+  | "select"
+  | "preview";
 
 export interface SelectionState {
   files: Set<string>;
@@ -86,7 +96,7 @@ interface AppStore {
 }
 
 export const useAppStore = create<AppStore>((set, get) => ({
-  route: "workspace",
+  route: "overview",
   project: null,
   git: null,
   hasAiIgnore: false,
@@ -156,7 +166,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       bundle: null,
       context: null,
       selection: emptySelection(),
-      route: "workspace",
+      route: "overview",
     });
   },
 
@@ -164,11 +174,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({ scanning: true, error: null, scanProgress: null });
     try {
       const response = await api.scanProject();
+      const currentRoute = get().route;
+      const targetRoute =
+        currentRoute === "overview" || currentRoute === "workspace" ? "context" : currentRoute;
       set({
         inventory: response.inventory,
         classCounts: response.classCounts,
         scanning: false,
-        route: "select",
+        route: targetRoute,
       });
       // A rescan can invalidate a stored selection; drop paths that vanished.
       const known = new Set(response.inventory.files.map((file) => file.path));

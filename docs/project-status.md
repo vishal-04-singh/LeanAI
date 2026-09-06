@@ -17,8 +17,8 @@ if the behaviour regresses; test names are in
 | 3 Offline bundler MVP | **Complete** | `concat`, `selection`, `tokenizer`, `manifest`, virtualised `FileTree`; 15 bundle tests + 13 component tests; macOS MT-01..18 recorded run | Cross-platform interactive manual pass (`docs/manual-test-plan.md`) on Windows |
 | 4 Persistence and export safety | **Complete** | Presets with revalidation, `.aiignore` with preview, git-diff scopes, secret scanner, export preflight, retention, audit log; 11 safety tests | — |
 | 5 Context and evaluation | **Complete** | 15-section provenance-backed index, conservative invalidation, source-on-demand, `leanai-bench`; 11 context tests | Multi-repository benchmark run (needs a provider — see below) |
-| 6 Local runtime | **Not started** | Design fixed in ADR 0009 | Post-MVP by design |
-| 7 Cloud/routing | **Not started** | Design fixed in ADRs 0007, 0008 | Post-MVP by design |
+| 6 Local runtime | **Complete** | `llama-server` loopback sidecar lifecycle (`Stopped` → `Starting` → `Ready` → `Stopping`), GGUF header inspection, ephemeral port allocation, zero orphan processes on stop and Drop; 4 integration tests in `sidecar.rs`, 5 provider tests in `provider.rs`, ModelsPage UI | — |
+| 7 Cloud/routing | **Complete** | OS secure storage (`keychain::KeychainStore`), non-secret references in SQLite, `CapabilityProfile`, `PriceCatalog`, deterministic cost-aware routing with auto-escalation, exact token counting opt-in (FR-14); 2 keychain tests, `no_table_stores_credentials` pass, 5 provider tests, ModelsPage UI | — |
 | 8 Guided agent | **Not started** | Design fixed in ADR 0010; `runs`/`run_events`/`approvals` schema already shipped | Post-MVP by design |
 | 9 Approved changes/multi-agent | **Not started** | Design fixed in ADR 0010 | Gated on Phase 8 |
 | 10 Optional memory/retrieval | **Not started** | Must beat the deterministic baseline to ship at all | Gated on Phase 5 benchmark |
@@ -33,11 +33,11 @@ text files, preview a deterministic bundle, see a labelled estimate, and
 copy/save it"* — is implemented and tested end to end, with the Phase 4 and 5
 work on top of it.
 
-- 60 Rust tests and 16 frontend tests, all green.
+- 71 Rust tests and 16 frontend tests (87 total), all green.
 - `cargo fmt`, `cargo clippy -D warnings`, `tsc --noEmit`, ESLint and Prettier
   clean.
-- A release build (`npx tauri build --no-bundle`) produces a 21 MB binary on
-  macOS aarch64. Launching it applies both migrations, creates all ten tables in
+- A release build (`npx tauri build --no-bundle`) produces a release binary on
+  macOS aarch64. Launching it applies all migrations (v1, v2, v3), creates all twelve tables in
   the OS app-data directory, and exits without leaving an orphan process.
 - CI runs the core crate on Linux, macOS and Windows, and the desktop app on
   macOS and Windows.
@@ -104,5 +104,5 @@ This is a deliberate reading of the plan's own critical path
 
 1. Interactive desktop manual pass on Windows (`docs/manual-test-plan.md` MT-01..18; macOS run already recorded).
 2. Obtain release signing credentials (Apple Developer ID, Windows signing certificate, Tauri updater key) to complete Step 3 of `docs/runbooks/release.md`.
-3. Post-MVP roadmap: Phase 6 (`llama-server` sidecar, ADR 0009) or Phase 7 (cloud providers with capability profiles, ADRs 0007–0008).
+3. Guided single-agent workflow (Phase 8, ADR 0010: read-only planner/coder/analyst roles, deterministic validator, and scoped approvals).
 

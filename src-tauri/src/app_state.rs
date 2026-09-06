@@ -67,6 +67,8 @@ pub struct AppState {
     settings: Mutex<Settings>,
     pub database_path: PathBuf,
     pub schema_version: u32,
+    pub sidecar: Arc<crate::sidecar_manager::SidecarManager>,
+    pub keychain: Arc<crate::keychain::KeychainStore>,
 }
 
 impl AppState {
@@ -88,6 +90,8 @@ impl AppState {
             settings: Mutex::new(settings),
             database_path,
             schema_version,
+            sidecar: Arc::new(crate::sidecar_manager::SidecarManager::new()),
+            keychain: Arc::new(crate::keychain::KeychainStore::new()),
         })
     }
 

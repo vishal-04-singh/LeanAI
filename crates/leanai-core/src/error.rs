@@ -30,6 +30,18 @@ pub enum CoreError {
 
     #[error("policy limit exceeded: {0}")]
     LimitExceeded(String),
+
+    #[error("missing required capability: {0}")]
+    MissingCapability(String),
+
+    #[error("provider error: {0}")]
+    Provider(String),
+
+    #[error("invalid model specification: {0}")]
+    InvalidModel(String),
+
+    #[error("budget exceeded: {0}")]
+    BudgetExceeded(String),
 }
 
 impl From<std::io::Error> for CoreError {

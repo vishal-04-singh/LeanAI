@@ -140,9 +140,41 @@ CREATE INDEX idx_approvals_run ON approvals(run_id);
 "#,
         down: "DROP TABLE approvals; DROP TABLE run_events; DROP TABLE runs;",
     },
+    Migration {
+        version: 3,
+        name: "models_and_providers",
+        up: r#"
+CREATE TABLE models (
+    id                 TEXT PRIMARY KEY,
+    kind               TEXT NOT NULL,
+    display_name       TEXT NOT NULL,
+    source             TEXT NOT NULL,
+    version            TEXT NOT NULL,
+    file_path          TEXT,
+    capability_profile TEXT NOT NULL,
+    checksum           TEXT,
+    status             TEXT NOT NULL,
+    created_at_ms      INTEGER NOT NULL,
+    updated_at_ms      INTEGER NOT NULL
+);
+
+CREATE INDEX idx_models_kind ON models(kind);
+
+CREATE TABLE provider_configs (
+    provider_id        TEXT PRIMARY KEY,
+    display_name       TEXT NOT NULL,
+    account_label      TEXT NOT NULL,
+    is_configured      INTEGER NOT NULL DEFAULT 0,
+    price_catalog_ver  TEXT NOT NULL,
+    enabled            INTEGER NOT NULL DEFAULT 1,
+    updated_at_ms      INTEGER NOT NULL
+);
+"#,
+        down: "DROP TABLE provider_configs; DROP TABLE models;",
+    },
 ];
 
-pub const LATEST_VERSION: u32 = 2;
+pub const LATEST_VERSION: u32 = 3;
 
 /// Applies pending migrations inside a transaction each, so a failure leaves
 /// the database at the last good version rather than half-migrated.

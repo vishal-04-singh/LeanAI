@@ -9,6 +9,8 @@ pub mod app_state;
 pub mod commands;
 pub mod db;
 pub mod error;
+pub mod keychain;
+pub mod sidecar_manager;
 
 use app_state::AppState;
 use tauri::Manager;
@@ -61,6 +63,19 @@ pub fn run() {
             commands::settings::describe_policy,
             commands::settings::reset_settings,
             commands::diagnostics::diagnostics,
+            commands::models::list_models,
+            commands::models::register_local_model,
+            commands::models::unregister_model,
+            commands::models::start_local_model,
+            commands::models::stop_local_model,
+            commands::models::local_model_status,
+            commands::models::list_providers,
+            commands::models::configure_provider_credential,
+            commands::models::disconnect_provider,
+            commands::models::check_provider_status,
+            commands::models::get_model_catalog,
+            commands::models::route_task,
+            commands::models::estimate_provider_tokens,
         ])
         .run(tauri::generate_context!())
         .expect("error while running LeanAI Desktop");

@@ -427,3 +427,200 @@ pub fn list_audit(
     })?;
     Ok(rows.collect::<Result<Vec<_>, _>>()?)
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelRecord {
+    pub id: String,
+    pub kind: String,
+    pub display_name: String,
+    pub source: String,
+    pub version: String,
+    pub file_path: Option<String>,
+    pub capability_profile: leanai_core::provider::CapabilityProfile,
+    pub checksum: Option<String>,
+    pub status: String,
+    pub created_at_ms: i64,
+    pub updated_at_ms: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderConfigRecord {
+    pub provider_id: String,
+    pub display_name: String,
+    pub account_label: String,
+    pub is_configured: bool,
+    pub price_catalog_ver: String,
+    pub enabled: bool,
+    pub updated_at_ms: i64,
+}
+
+pub fn upsert_model(connection: &Connection, record: &ModelRecord) -> AppResult<ModelRecord> {
+    let now = now_ms() as i64;
+    let profile_json = serde_json::to_string(&record.capability_profile)
+        .map_err(|e| AppError::internal(e.to_string()))?;
+    connection.execute(
+        "INSERT INTO models (id, kind, display_name, source, version, file_path, capability_profile, checksum, status, created_at_ms, updated_at_ms)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+         ON CONFLICT(id) DO UPDATE SET
+            kind = ?2,
+            display_name = ?3,
+            source = ?4,
+            version = ?5,
+            file_path = ?6,
+            capability_profile = ?7,
+            checksum = ?8,
+            status = ?9,
+            updated_at_ms = ?11",
+        params![
+            record.id,
+            record.kind,
+            record.display_name,
+            record.source,
+            record.version,
+            record.file_path,
+            profile_json,
+            record.checksum,
+            record.status,
+            record.created_at_ms,
+            now,
+        ],
+    )?;
+    get_model(connection, &record.id)?
+        .ok_or_else(|| AppError::internal("model disappeared after upsert"))
+}
+
+pub fn list_models(connection: &Connection) -> AppResult<Vec<ModelRecord>> {
+    let mut statement = connection.prepare(
+        "SELECT id, kind, display_name, source, version, file_path, capability_profile, checksum, status, created_at_ms, updated_at_ms
+         FROM models ORDER BY display_name ASC",
+    )?;
+    let rows = statement.query_map([], |row| {
+        let profile_raw: String = row.get(6)?;
+        let profile = serde_json::from_str(&profile_raw).map_err(|e| {
+            rusqlite::Error::FromSqlConversionFailure(6, rusqlite::types::Type::Text, Box::new(e))
+        })?;
+        Ok(ModelRecord {
+            id: row.get(0)?,
+            kind: row.get(1)?,
+            display_name: row.get(2)?,
+            source: row.get(3)?,
+            version: row.get(4)?,
+            file_path: row.get(5)?,
+            capability_profile: profile,
+            checksum: row.get(7)?,
+            status: row.get(8)?,
+            created_at_ms: row.get(9)?,
+            updated_at_ms: row.get(10)?,
+        })
+    })?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn get_model(connection: &Connection, id: &str) -> AppResult<Option<ModelRecord>> {
+    let mut statement = connection.prepare(
+        "SELECT id, kind, display_name, source, version, file_path, capability_profile, checksum, status, created_at_ms, updated_at_ms
+         FROM models WHERE id = ?1",
+    )?;
+    let mut rows = statement.query_map(params![id], |row| {
+        let profile_raw: String = row.get(6)?;
+        let profile = serde_json::from_str(&profile_raw).map_err(|e| {
+            rusqlite::Error::FromSqlConversionFailure(6, rusqlite::types::Type::Text, Box::new(e))
+        })?;
+        Ok(ModelRecord {
+            id: row.get(0)?,
+            kind: row.get(1)?,
+            display_name: row.get(2)?,
+            source: row.get(3)?,
+            version: row.get(4)?,
+            file_path: row.get(5)?,
+            capability_profile: profile,
+            checksum: row.get(7)?,
+            status: row.get(8)?,
+            created_at_ms: row.get(9)?,
+            updated_at_ms: row.get(10)?,
+        })
+    })?;
+
+    match rows.next() {
+        Some(result) => Ok(Some(result?)),
+        None => Ok(None),
+    }
+}
+
+pub fn delete_model(connection: &Connection, id: &str) -> AppResult<bool> {
+    let affected = connection.execute("DELETE FROM models WHERE id = ?1", params![id])?;
+    Ok(affected > 0)
+}
+
+pub fn list_provider_configs(connection: &Connection) -> AppResult<Vec<ProviderConfigRecord>> {
+    let mut statement = connection.prepare(
+        "SELECT provider_id, display_name, account_label, is_configured, price_catalog_ver, enabled, updated_at_ms
+         FROM provider_configs ORDER BY provider_id ASC",
+    )?;
+    let rows = statement.query_map([], |row| {
+        let is_configured_int: i64 = row.get(3)?;
+        let enabled_int: i64 = row.get(5)?;
+        Ok(ProviderConfigRecord {
+            provider_id: row.get(0)?,
+            display_name: row.get(1)?,
+            account_label: row.get(2)?,
+            is_configured: is_configured_int != 0,
+            price_catalog_ver: row.get(4)?,
+            enabled: enabled_int != 0,
+            updated_at_ms: row.get(6)?,
+        })
+    })?;
+    Ok(rows.collect::<Result<Vec<_>, _>>()?)
+}
+
+pub fn set_provider_config(
+    connection: &Connection,
+    provider_id: &str,
+    display_name: &str,
+    account_label: &str,
+    is_configured: bool,
+    price_catalog_ver: &str,
+    enabled: bool,
+) -> AppResult<ProviderConfigRecord> {
+    let now = now_ms() as i64;
+    connection.execute(
+        "INSERT INTO provider_configs (provider_id, display_name, account_label, is_configured, price_catalog_ver, enabled, updated_at_ms)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+         ON CONFLICT(provider_id) DO UPDATE SET
+            display_name = ?2,
+            account_label = ?3,
+            is_configured = ?4,
+            price_catalog_ver = ?5,
+            enabled = ?6,
+            updated_at_ms = ?7",
+        params![
+            provider_id,
+            display_name,
+            account_label,
+            if is_configured { 1 } else { 0 },
+            price_catalog_ver,
+            if enabled { 1 } else { 0 },
+            now,
+        ],
+    )?;
+
+    Ok(ProviderConfigRecord {
+        provider_id: provider_id.to_string(),
+        display_name: display_name.to_string(),
+        account_label: account_label.to_string(),
+        is_configured,
+        price_catalog_ver: price_catalog_ver.to_string(),
+        enabled,
+        updated_at_ms: now,
+    })
+}
+
+pub fn delete_provider_config(connection: &Connection, provider_id: &str) -> AppResult<bool> {
+    let affected = connection.execute(
+        "DELETE FROM provider_configs WHERE provider_id = ?1",
+        params![provider_id],
+    )?;
+    Ok(affected > 0)
+}

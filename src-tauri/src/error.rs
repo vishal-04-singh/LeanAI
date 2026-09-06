@@ -77,6 +77,13 @@ impl From<leanai_core::CoreError> for AppError {
             E::InvalidSelection(message) => AppError::new("invalid_selection", message.clone()),
             E::LimitExceeded(message) => AppError::new("limit_exceeded", message.clone())
                 .with_recovery("Reduce the selection, or change the limit in Settings."),
+            E::MissingCapability(message) => AppError::new("missing_capability", message.clone())
+                .with_recovery("Select a model or provider that supports this capability."),
+            E::Provider(message) => AppError::new("provider_error", message.clone()).retryable(),
+            E::InvalidModel(message) => AppError::new("invalid_model", message.clone())
+                .with_recovery("Verify the model format and checksum before activation."),
+            E::BudgetExceeded(message) => AppError::new("budget_exceeded", message.clone())
+                .with_recovery("Increase the task budget or switch to a lower-cost tier."),
         }
     }
 }
