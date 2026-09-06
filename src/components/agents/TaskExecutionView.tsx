@@ -19,11 +19,13 @@ import {
   ShieldCheckIcon,
   SearchIcon,
   TerminalIcon,
+  UploadCloudIcon,
   XIcon,
 } from "../icons";
+import { GitSyncModal } from "../git/GitSyncModal";
 
 export function TaskExecutionView() {
-  const { bundle, selection } = useAppStore();
+  const { bundle, selection, git } = useAppStore();
   const [promptInput, setPromptInput] = useState("");
   const [contextFiles, setContextFiles] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<
@@ -33,6 +35,7 @@ export function TaskExecutionView() {
   const [isLoading, setIsLoading] = useState(false);
   const [currentRun, setCurrentRun] = useState<TaskRunResponse | null>(null);
   const [approvalResult, setApprovalResult] = useState<ResolveApprovalResponse | null>(null);
+  const [showGitSync, setShowGitSync] = useState(false);
   const [approvalSubmitting, setApprovalSubmitting] = useState(false);
 
   // Tester state
@@ -359,11 +362,26 @@ export function TaskExecutionView() {
               : "border-critical/30 bg-critical/10 text-critical"
           }`}
         >
-          <div className="flex items-center gap-2">
-            <CheckCircleIcon size={14} />
-            <span className="font-semibold">{approvalResult.message}</span>
-            {approvalResult.rollbackPerformed && (
-              <span className="text-[11px] text-ink-400 font-mono">(Automatic rollback clean)</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircleIcon size={14} />
+              <span className="font-semibold">{approvalResult.message}</span>
+              {approvalResult.rollbackPerformed && (
+                <span className="text-[11px] text-ink-400 font-mono">
+                  (Automatic rollback clean)
+                </span>
+              )}
+            </div>
+            {approvalResult.patchApplied && git?.isRepository && (
+              <Button
+                variant="secondary"
+                size="xs"
+                onClick={() => setShowGitSync(true)}
+                className="flex items-center gap-1 shrink-0"
+              >
+                <UploadCloudIcon size={12} />
+                <span>Push to Remote</span>
+              </Button>
             )}
           </div>
         </div>
@@ -875,6 +893,8 @@ export function TaskExecutionView() {
           </Button>
         </div>
       </div>
+
+      <GitSyncModal open={showGitSync} onClose={() => setShowGitSync(false)} />
     </div>
   );
 }

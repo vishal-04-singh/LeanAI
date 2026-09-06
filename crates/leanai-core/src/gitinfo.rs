@@ -47,6 +47,36 @@ pub struct GitState {
     pub is_dirty: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteInfo {
+    pub name: String,
+    pub url: String,
+    pub protocol: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CommitSummary {
+    pub id: String,
+    pub summary: String,
+    pub author: String,
+    pub timestamp_ms: i64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GitRemoteStatus {
+    pub is_repository: bool,
+    pub current_branch: Option<String>,
+    pub remotes: Vec<RemoteInfo>,
+    pub upstream_branch: Option<String>,
+    pub ahead: usize,
+    pub behind: usize,
+    pub unpushed_commits: Vec<CommitSummary>,
+    pub is_dirty: bool,
+}
+
 pub fn git_state(root: &Path) -> GitState {
     let Ok(repo) = Repository::open(root) else {
         return GitState {
@@ -76,6 +106,121 @@ fn is_dirty(repo: &Repository) -> bool {
     repo.statuses(Some(&mut options))
         .map(|statuses| !statuses.is_empty())
         .unwrap_or(false)
+}
+
+/// Returns the remote tracking status of a repository (remotes, upstream branch, ahead/behind counts).
+pub fn remote_status(root: &Path) -> Result<GitRemoteStatus> {
+    let repo = match Repository::open(root) {
+        Ok(repo) => repo,
+        Err(_) => {
+            return Ok(GitRemoteStatus {
+                is_repository: false,
+                current_branch: None,
+                remotes: Vec::new(),
+                upstream_branch: None,
+                ahead: 0,
+                behind: 0,
+                unpushed_commits: Vec::new(),
+                is_dirty: false,
+            });
+        }
+    };
+
+    let dirty = is_dirty(&repo);
+
+    let mut remotes = Vec::new();
+    if let Ok(remote_names) = repo.remotes() {
+        for name in remote_names.iter().flatten() {
+            if let Ok(remote) = repo.find_remote(name) {
+                if let Some(url) = remote.url() {
+                    let protocol = if url.starts_with("git@") || url.starts_with("ssh://") {
+                        "ssh".to_string()
+                    } else if url.starts_with("https://") || url.starts_with("http://") {
+                        "https".to_string()
+                    } else {
+                        "other".to_string()
+                    };
+                    remotes.push(RemoteInfo {
+                        name: name.to_string(),
+                        url: url.to_string(),
+                        protocol,
+                    });
+                }
+            }
+        }
+    }
+
+    let head = match repo.head() {
+        Ok(h) => h,
+        Err(_) => {
+            return Ok(GitRemoteStatus {
+                is_repository: true,
+                current_branch: None,
+                remotes,
+                upstream_branch: None,
+                ahead: 0,
+                behind: 0,
+                unpushed_commits: Vec::new(),
+                is_dirty: dirty,
+            });
+        }
+    };
+
+    let current_branch = head.shorthand().map(str::to_string);
+    let head_oid = head.target();
+
+    let mut upstream_branch = None;
+    let mut ahead = 0;
+    let mut behind = 0;
+    let mut unpushed_commits = Vec::new();
+
+    if let Some(branch_name) = &current_branch {
+        if let Ok(local_branch) = repo.find_branch(branch_name, git2::BranchType::Local) {
+            if let Ok(upstream) = local_branch.upstream() {
+                if let Ok(Some(upstream_name)) = upstream.name() {
+                    upstream_branch = Some(upstream_name.to_string());
+                }
+                if let (Some(local_oid), Some(up_oid)) = (head_oid, upstream.get().target()) {
+                    if let Ok((a, b)) = repo.graph_ahead_behind(local_oid, up_oid) {
+                        ahead = a;
+                        behind = b;
+                    }
+
+                    if ahead > 0 {
+                        if let Ok(mut revwalk) = repo.revwalk() {
+                            let _ = revwalk.push(local_oid);
+                            let _ = revwalk.hide(up_oid);
+                            for oid in revwalk.take(ahead.min(50)).flatten() {
+                                if let Ok(commit) = repo.find_commit(oid) {
+                                    let summary = commit.summary().unwrap_or("").to_string();
+                                    let author =
+                                        commit.author().name().unwrap_or("Unknown").to_string();
+                                    let timestamp_ms = commit.time().seconds() * 1000;
+                                    unpushed_commits.push(CommitSummary {
+                                        id: oid.to_string(),
+                                        summary,
+                                        author,
+                                        timestamp_ms,
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(GitRemoteStatus {
+        is_repository: true,
+        current_branch,
+        remotes,
+        upstream_branch,
+        ahead,
+        behind,
+        unpushed_commits,
+        is_dirty: dirty,
+    })
 }
 
 /// A revision identifier stored with every bundle and context document.

@@ -94,28 +94,22 @@ export function AgentsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-ink-800/80 pb-3">
         <div>
           <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded border border-ink-750 bg-ink-850 text-ink-300">
-              <AgentsIcon size={14} />
-            </div>
+            <AgentsIcon size={18} className="text-brand" />
             <div>
-              <h1 className="text-sm font-bold text-white tracking-tight">
-                Multi-Agent Orchestration Center
+              <h1 className="text-base font-bold text-white tracking-tight">
+                Agent Fleet
               </h1>
-              <p className="text-xs text-ink-400">
-                Specialized agent fleet collaborating through structured context passing and local
-                verification.
-              </p>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mt-3 sm:mt-0">
           <Chip tone="ok" dot>
-            6 Agents Online
+            6 Online
           </Chip>
           <Button variant="primary" onClick={() => setRoute("tasks")}>
             <ZapIcon size={12} />
-            <span>Launch Task Workspace →</span>
+            <span>Launch Task →</span>
           </Button>
         </div>
       </div>
@@ -124,14 +118,11 @@ export function AgentsPage() {
       <AgentGraph />
 
       {/* Agent Fleet Roster Grid */}
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-400">
-            Agent Fleet Roster
+          <h2 className="text-sm font-semibold text-ink-100">
+            Agents
           </h2>
-          <span className="text-[11px] text-ink-500">
-            Click an agent to inspect details and system prompt
-          </span>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -150,46 +141,40 @@ export function AgentsPage() {
           onClick={() => setSelectedAgent(null)}
         >
           <div
-            className="w-full max-w-xl rounded-lg border border-ink-750 bg-ink-900 p-5 shadow-2xl space-y-3.5"
+            className="w-full max-w-lg rounded-xl border border-ink-800/60 bg-ink-950 p-6 shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="flex size-8 items-center justify-center rounded border border-ink-750 bg-ink-850 text-ink-300">
-                  <AgentsIcon size={16} />
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-lg border border-brand/20 bg-brand/10 text-brand">
+                  <AgentsIcon size={18} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white">{selectedAgent.name}</h3>
+                  <h3 className="text-base font-semibold text-white">{selectedAgent.name}</h3>
                   <p className="text-xs text-ink-400">{selectedAgent.role}</p>
                 </div>
               </div>
-              <Button variant="ghost" size="xs" onClick={() => setSelectedAgent(null)}>
-                Close
-              </Button>
             </div>
 
-            <p className="text-xs leading-relaxed text-ink-200">{selectedAgent.description}</p>
+            <p className="text-sm leading-relaxed text-ink-300">{selectedAgent.description}</p>
 
-            <div className="rounded border border-ink-800 bg-ink-950 p-3 space-y-2">
-              <span className="text-[11px] font-semibold text-ink-300">Model Configuration:</span>
-              <div className="flex items-center justify-between text-xs text-ink-400">
-                <span>Model Target:</span>
-                <span className="font-medium text-white">{selectedAgent.model}</span>
+            <div className="rounded-lg border border-ink-800/60 bg-ink-900/40 p-3 space-y-2 text-xs">
+              <div className="flex items-center justify-between text-ink-400">
+                <span>Model:</span>
+                <span className="font-medium text-ink-100">{selectedAgent.model}</span>
               </div>
-              <div className="flex items-center justify-between text-xs text-ink-400">
+              <div className="flex items-center justify-between text-ink-400">
                 <span>Temperature:</span>
                 <span className="mono">{selectedAgent.temperature}</span>
               </div>
-              <div className="flex items-center justify-between text-xs text-ink-400">
-                <span>Execution Mode:</span>
+              <div className="flex items-center justify-between text-ink-400">
+                <span>Execution:</span>
                 <span className="mono text-ok">Zero Egress Verified</span>
               </div>
             </div>
 
             <div>
-              <span className="text-[11px] font-semibold text-ink-300">
-                Granted Tool Capabilities:
-              </span>
+              <span className="text-xs font-medium text-ink-400">Capabilities</span>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {selectedAgent.capabilities.map((cap) => (
                   <Chip key={cap} tone="neutral">
@@ -199,7 +184,7 @@ export function AgentsPage() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-ink-800">
+            <div className="flex justify-end gap-2 pt-4">
               <Button variant="ghost" onClick={() => setSelectedAgent(null)}>
                 Dismiss
               </Button>
@@ -210,7 +195,7 @@ export function AgentsPage() {
                   setRoute("tasks");
                 }}
               >
-                Dispatch with {selectedAgent.name}
+                Dispatch {selectedAgent.name}
               </Button>
             </div>
           </div>

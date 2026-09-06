@@ -1,6 +1,6 @@
 import { useAppStore } from "../../store/useAppStore";
 import { formatNumber } from "../primitives";
-import { SparklesIcon, ZapIcon } from "../icons";
+import { LogoIcon, ZapIcon } from "../icons";
 
 export function CompressionHero() {
   const { inventory, bundle, setRoute } = useAppStore();
@@ -24,8 +24,8 @@ export function CompressionHero() {
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         {/* Left: Value proposition */}
         <div className="max-w-xl">
-          <div className="inline-flex items-center gap-1.5 rounded border border-ink-750 bg-ink-850 px-2 py-0.5 text-[11px] font-medium text-ink-300">
-            <SparklesIcon size={11} className="text-ink-400" />
+          <div className="inline-flex items-center gap-2 rounded-full border border-ink-750 bg-ink-850 px-2.5 py-0.5 text-[11px] font-medium text-ink-300">
+            <LogoIcon size={14} className="rounded-xs" />
             <span>AI Context Bundling Engine</span>
           </div>
 

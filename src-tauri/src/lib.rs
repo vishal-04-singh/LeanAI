@@ -12,6 +12,62 @@ pub mod error;
 pub mod keychain;
 pub mod sidecar_manager;
 
+#[cfg(target_os = "macos")]
+mod macos_dock {
+    use std::ffi::{c_char, c_void};
+
+    extern "C" {
+        fn objc_getClass(name: *const c_char) -> *mut c_void;
+        fn sel_registerName(name: *const c_char) -> *mut c_void;
+        fn objc_msgSend();
+    }
+
+    pub fn set_dock_icon(icon_bytes: &[u8]) {
+        unsafe {
+            let ns_data_class = objc_getClass(c"NSData".as_ptr());
+            let ns_image_class = objc_getClass(c"NSImage".as_ptr());
+            let ns_app_class = objc_getClass(c"NSApplication".as_ptr());
+            if ns_data_class.is_null() || ns_image_class.is_null() || ns_app_class.is_null() {
+                return;
+            }
+
+            let sel_data_with_bytes = sel_registerName(c"dataWithBytes:length:".as_ptr());
+            let sel_alloc = sel_registerName(c"alloc".as_ptr());
+            let sel_init_with_data = sel_registerName(c"initWithData:".as_ptr());
+            let sel_shared_app = sel_registerName(c"sharedApplication".as_ptr());
+            let sel_set_icon = sel_registerName(c"setApplicationIconImage:".as_ptr());
+
+            let msg_send_data: unsafe extern "C" fn(*mut c_void, *mut c_void, *const u8, usize) -> *mut c_void =
+                std::mem::transmute(objc_msgSend as *const ());
+            let data = msg_send_data(ns_data_class, sel_data_with_bytes, icon_bytes.as_ptr(), icon_bytes.len());
+            if data.is_null() {
+                return;
+            }
+
+            let msg_send_no_args: unsafe extern "C" fn(*mut c_void, *mut c_void) -> *mut c_void =
+                std::mem::transmute(objc_msgSend as *const ());
+            let raw_image = msg_send_no_args(ns_image_class, sel_alloc);
+            if raw_image.is_null() {
+                return;
+            }
+
+            let msg_send_one_arg: unsafe extern "C" fn(*mut c_void, *mut c_void, *mut c_void) -> *mut c_void =
+                std::mem::transmute(objc_msgSend as *const ());
+            let image = msg_send_one_arg(raw_image, sel_init_with_data, data);
+            if image.is_null() {
+                return;
+            }
+
+            let app = msg_send_no_args(ns_app_class, sel_shared_app);
+            if !app.is_null() {
+                let msg_send_set_icon: unsafe extern "C" fn(*mut c_void, *mut c_void, *mut c_void) =
+                    std::mem::transmute(objc_msgSend as *const ());
+                msg_send_set_icon(app, sel_set_icon, image);
+            }
+        }
+    }
+}
+
 use app_state::AppState;
 use tauri::Manager;
 
@@ -27,6 +83,13 @@ pub fn run() {
                 std::io::Error::other(format!("{}: {}", error.code, error.message))
             })?;
             app.manage(state);
+
+            #[cfg(target_os = "macos")]
+            {
+                const ICON_BYTES: &[u8] = include_bytes!("../icons/icon.png");
+                macos_dock::set_dock_icon(ICON_BYTES);
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -85,6 +148,14 @@ pub fn run() {
             commands::agent::get_command_allowlist_command,
             commands::agent::update_command_allowlist_command,
             commands::agent::run_tester_step,
+            commands::git::get_git_auth_status,
+            commands::git::configure_github_token,
+            commands::git::disconnect_github,
+            commands::git::test_github_ssh,
+            commands::git::git_remote_status,
+            commands::git::git_push_branch,
+            commands::git::clone_remote_repository,
+            commands::git::list_github_repositories,
         ])
         .run(tauri::generate_context!())
         .expect("error while running LeanAI Desktop");

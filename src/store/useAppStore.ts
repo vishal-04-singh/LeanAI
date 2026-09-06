@@ -7,6 +7,12 @@ import type {
   BundleOptions,
   ContextResponse,
   GitState,
+  GitAuthStatus,
+  GitRemoteStatus,
+  GitPushRequest,
+  GitPushResponse,
+  CloneRepositoryRequest,
+  GitHubRepository,
   Inventory,
   PolicyDescription,
   ProjectRecord,
@@ -54,6 +60,10 @@ interface AppStore {
   route: Route;
   project: ProjectRecord | null;
   git: GitState | null;
+  remoteStatus: GitRemoteStatus | null;
+  gitAuth: GitAuthStatus | null;
+  githubRepos: GitHubRepository[];
+  loadingGithubRepos: boolean;
   hasAiIgnore: boolean;
   inventory: Inventory | null;
   classCounts: Record<string, number>;
@@ -79,6 +89,11 @@ interface AppStore {
   closeProject: () => Promise<void>;
   scan: () => Promise<void>;
   cancelScan: () => Promise<void>;
+  loadRemoteStatus: () => Promise<void>;
+  loadGitAuth: () => Promise<void>;
+  loadGithubRepos: () => Promise<void>;
+  pushBranch: (request?: GitPushRequest) => Promise<GitPushResponse>;
+  cloneRepository: (request: CloneRepositoryRequest) => Promise<void>;
 
   toggleFile: (path: string, selected: boolean) => void;
   toggleDirectory: (directory: string, selected: boolean, paths: string[]) => void;
@@ -99,6 +114,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
   route: "overview",
   project: null,
   git: null,
+  remoteStatus: null,
+  gitAuth: null,
+  githubRepos: [],
+  loadingGithubRepos: false,
   hasAiIgnore: false,
   inventory: null,
   classCounts: {},
@@ -132,6 +151,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
     try {
       const [settings, policy] = await Promise.all([api.getSettings(), api.describePolicy()]);
       set({ settings, policy, options: settings.defaultBundleOptions });
+      get()
+        .loadGitAuth()
+        .catch(() => undefined);
     } catch (error) {
       set({ error: toAppError(error) });
     }
@@ -143,6 +165,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       set({
         project: response.project,
         git: response.git,
+        remoteStatus: null,
         hasAiIgnore: response.hasAiIgnore,
         inventory: null,
         bundle: null,
@@ -150,6 +173,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
         selection: emptySelection(),
         error: null,
       });
+      get()
+        .loadRemoteStatus()
+        .catch(() => undefined);
       await get().scan();
       await get().loadContext();
     } catch (error) {
@@ -162,6 +188,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set({
       project: null,
       git: null,
+      remoteStatus: null,
       inventory: null,
       bundle: null,
       context: null,
@@ -302,6 +329,82 @@ export const useAppStore = create<AppStore>((set, get) => ({
       set({ settings: saved, notice: "Settings saved." });
     } catch (error) {
       set({ error: toAppError(error) });
+    }
+  },
+
+  loadRemoteStatus: async () => {
+    try {
+      const remoteStatus = await api.gitRemoteStatus();
+      set({ remoteStatus });
+    } catch {
+      set({ remoteStatus: null });
+    }
+  },
+
+  loadGitAuth: async () => {
+    try {
+      const gitAuth = await api.getGitAuthStatus();
+      set({ gitAuth });
+      if (gitAuth.githubTokenConfigured) {
+        get()
+          .loadGithubRepos()
+          .catch(() => undefined);
+      } else {
+        set({ githubRepos: [] });
+      }
+    } catch {
+      set({ gitAuth: null, githubRepos: [] });
+    }
+  },
+
+  loadGithubRepos: async () => {
+    set({ loadingGithubRepos: true });
+    try {
+      const githubRepos = await api.listGithubRepositories();
+      set({ githubRepos, loadingGithubRepos: false });
+    } catch {
+      set({ loadingGithubRepos: false });
+      // Keep any existing cached repos on error, don't crash
+    }
+  },
+
+  pushBranch: async (request = {}) => {
+    try {
+      const res = await api.gitPushBranch(request);
+      await get().loadRemoteStatus();
+      set({ notice: res.message });
+      return res;
+    } catch (error) {
+      const appErr = toAppError(error);
+      set({ error: appErr });
+      throw appErr;
+    }
+  },
+
+  cloneRepository: async (request: CloneRepositoryRequest) => {
+    try {
+      const response = await api.cloneRemoteRepository(request);
+      set({
+        project: response.project,
+        git: response.git,
+        remoteStatus: null,
+        hasAiIgnore: response.hasAiIgnore,
+        inventory: null,
+        bundle: null,
+        context: null,
+        selection: emptySelection(),
+        error: null,
+        notice: `Repository cloned into ${response.project.displayName}`,
+      });
+      get()
+        .loadRemoteStatus()
+        .catch(() => undefined);
+      await get().scan();
+      await get().loadContext();
+    } catch (error) {
+      const appErr = toAppError(error);
+      set({ error: appErr });
+      throw appErr;
     }
   },
 }));

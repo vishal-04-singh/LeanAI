@@ -1,5 +1,5 @@
 import { useAppStore } from "../../store/useAppStore";
-import { GitBranchIcon, ShieldCheckIcon, TerminalIcon } from "../icons";
+import { GitBranchIcon, ShieldCheckIcon } from "../icons";
 import { formatNumber } from "../primitives";
 
 export function StatusBar() {
@@ -10,87 +10,53 @@ export function StatusBar() {
   const tokenEstimate = bundle?.estimate.value ?? 0;
 
   return (
-    <footer className="flex h-6 shrink-0 items-center justify-between border-t border-ink-800/80 bg-ink-950 px-3 text-[11px] text-ink-400 select-none">
-      {/* Left: Project & Git State */}
-      <div className="flex items-center gap-3">
+    <footer className="flex h-5 shrink-0 items-center justify-between border-t border-ink-800/60 bg-ink-950 px-3 text-[10px] text-ink-500 select-none">
+      {/* Left */}
+      <div className="flex items-center gap-2.5">
         {project ? (
           <>
-            {git?.isRepository ? (
+            {git?.isRepository && (
               <div
-                className="flex items-center gap-1.5 cursor-pointer hover:text-ink-200 transition-colors"
+                className="flex items-center gap-1 cursor-pointer hover:text-ink-300 transition-colors"
                 onClick={() => setRoute("context")}
-                title="Active Git Branch"
               >
-                <GitBranchIcon size={11} className="text-ink-400" />
+                <GitBranchIcon size={10} />
                 <span className="mono">{git.headRef ?? "detached"}</span>
-                <span
-                  className={`size-1.5 rounded-full ${git.isDirty ? "bg-warn" : "bg-ok"}`}
-                  title={git.isDirty ? "Uncommitted changes" : "Clean tree"}
-                />
+                <span className={`size-1.5 rounded-full ${git.isDirty ? "bg-warn" : "bg-ok"}`} />
               </div>
-            ) : (
-              <span className="text-ink-500">Local Folder</span>
             )}
-
-            <div className="h-3 w-px bg-ink-800" />
-
-            {/* Inventory count */}
-            <div
-              className="cursor-pointer hover:text-ink-200 transition-colors"
+            <span
+              className="cursor-pointer hover:text-ink-300 transition-colors"
               onClick={() => setRoute("context")}
-              title="Scanned project files"
             >
-              <span>{formatNumber(totalFiles)} files</span>
-            </div>
-
-            {selectedCount > 0 ? (
-              <>
-                <div className="h-3 w-px bg-ink-800" />
-                <div
-                  className="flex items-center gap-1.5 cursor-pointer text-ink-200 hover:text-white transition-colors"
-                  onClick={() => setRoute("context")}
-                  title="Files selected for context bundle"
-                >
-                  <span className="font-medium">{selectedCount} selected</span>
-                  {tokenEstimate > 0 ? (
-                    <span className="mono text-[10px] text-ink-400">
-                      (~{formatNumber(tokenEstimate)} tok)
-                    </span>
-                  ) : null}
-                </div>
-              </>
-            ) : null}
+              {formatNumber(totalFiles)} files
+            </span>
+            {selectedCount > 0 && (
+              <span
+                className="text-brand font-medium cursor-pointer hover:text-brand-light transition-colors"
+                onClick={() => setRoute("context")}
+              >
+                {selectedCount} selected
+                {tokenEstimate > 0 && (
+                  <span className="ml-1 mono text-ink-500 font-normal">
+                    (~{formatNumber(tokenEstimate)} tok)
+                  </span>
+                )}
+              </span>
+            )}
           </>
         ) : (
-          <span className="text-ink-500">No project open</span>
+          <span className="text-ink-700">No project</span>
         )}
       </div>
 
-      {/* Right: Runtime & Safety guarantees */}
-      <div className="flex items-center gap-3">
-        <div
-          className="flex items-center gap-1.5 cursor-pointer hover:text-ink-200 transition-colors"
-          onClick={() => setRoute("settings")}
-          title="Privacy: All scanning, bundling and indexing runs on this device"
-        >
-          <ShieldCheckIcon size={12} className="text-ok" />
-          <span className="text-ink-300">Offline First · Zero Egress</span>
-        </div>
-
-        <div className="h-3 w-px bg-ink-800" />
-
-        <div
-          className="flex items-center gap-1.5 cursor-pointer hover:text-ink-200 transition-colors"
-          onClick={() => setRoute("models")}
-          title="Sidecar loopback endpoint"
-        >
-          <TerminalIcon size={11} className="text-ink-500" />
-          <span className="mono text-[10px] text-ink-400">127.0.0.1 (Loopback)</span>
-        </div>
-
-        <div className="h-3 w-px bg-ink-800" />
-
-        <span className="mono text-[10px] text-ink-500">UTF-8 · LF</span>
+      {/* Right */}
+      <div
+        className="flex items-center gap-1 cursor-pointer hover:text-ink-300 transition-colors"
+        onClick={() => setRoute("settings")}
+      >
+        <ShieldCheckIcon size={11} className="text-ok" />
+        <span>Offline · Zero Egress</span>
       </div>
     </footer>
   );

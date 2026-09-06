@@ -60,3 +60,27 @@ fn isolated_provider_namespaces() {
     assert!(!store.is_configured("openai").unwrap());
     assert!(store.is_configured("anthropic").unwrap());
 }
+
+#[test]
+fn github_token_keychain_storage() {
+    let store = KeychainStore::mock();
+
+    assert!(!store.is_configured("github").unwrap());
+
+    store
+        .store(
+            "github",
+            "octocat",
+            "ghp_1234567890abcdefghijklmnopqrstuvwxyz",
+        )
+        .unwrap();
+    assert!(store.is_configured("github").unwrap());
+    assert_eq!(
+        store.read("github").unwrap().as_deref(),
+        Some("ghp_1234567890abcdefghijklmnopqrstuvwxyz")
+    );
+
+    let deleted = store.delete("github").unwrap();
+    assert!(deleted);
+    assert!(!store.is_configured("github").unwrap());
+}

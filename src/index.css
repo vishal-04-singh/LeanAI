@@ -1,27 +1,36 @@
 @import "tailwindcss";
 
-/* Premium Minimalist Design Tokens (Linear / Cursor / Raycast inspired).
-   Quiet obsidian & carbon surfaces, crisp high-contrast typography, and restrained semantic accents.
-   Colour never carries meaning on its own (NFR 7.3). */
+/* LeanAI — Brand-aligned design tokens.
+   Base: deep navy/slate. Accent: cyan → blue → purple gradient (matches logo). */
 @theme {
-  --color-ink-950: #08080a;
-  --color-ink-900: #0e0e11;
-  --color-ink-850: #131317;
-  --color-ink-800: #1a1a20;
-  --color-ink-750: #22222a;
-  --color-ink-700: #2c2c36;
-  --color-ink-600: #444452;
-  --color-ink-500: #6b6b7b;
-  --color-ink-400: #9393a2;
-  --color-ink-300: #c4c4d0;
-  --color-ink-200: #e2e2ea;
-  --color-ink-100: #f7f7fa;
+  /* Surfaces — deep navy base */
+  --color-ink-950: #07071a;
+  --color-ink-900: #0d0d22;
+  --color-ink-850: #111128;
+  --color-ink-800: #18182e;
+  --color-ink-750: #20203a;
+  --color-ink-700: #2a2a46;
+  --color-ink-600: #40405e;
+  --color-ink-500: #606080;
+  --color-ink-400: #8888aa;
+  --color-ink-300: #b8b8cc;
+  --color-ink-200: #dcdce8;
+  --color-ink-100: #f4f4f8;
 
-  --color-accent: #f4f4f5;
-  --color-accent-hover: #e4e4e7;
-  --color-accent-light: #ffffff;
-  --color-cyan: #a1a1aa;
-  --color-purple: #a1a1aa;
+  /* Brand palette — matches logo gradient */
+  --color-brand: #4B7BFF;
+  --color-brand-cyan: #22D3EE;
+  --color-brand-purple: #8B5CF6;
+  --color-brand-light: #6B9FFF;
+
+  /* Legacy accent aliases */
+  --color-accent: #4B7BFF;
+  --color-accent-hover: #3a6aee;
+  --color-accent-light: #6B9FFF;
+  --color-cyan: #22D3EE;
+  --color-purple: #8B5CF6;
+
+  /* Semantic */
   --color-warn: #f59e0b;
   --color-danger: #ef4444;
   --color-ok: #22c55e;
@@ -49,9 +58,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Accessible focus ring */
+/* Accessible focus ring — brand blue */
 :focus-visible {
-  outline: 2px solid var(--color-ink-100);
+  outline: 2px solid var(--color-brand);
   outline-offset: 2px;
 }
 
@@ -61,23 +70,20 @@ body {
   letter-spacing: -0.025em;
 }
 
-/* Minimal, understated scrollbars */
+/* Minimal scrollbars */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(75, 123, 255, 0.18);
   border-radius: 9999px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(75, 123, 255, 0.35);
 }
 
 @media (prefers-reduced-motion: reduce) {

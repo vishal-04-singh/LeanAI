@@ -694,3 +694,98 @@ export interface QueryTaskContextRequest {
   pinnedPaths?: string[];
   enabled?: boolean;
 }
+
+export interface GitHubRepository {
+  id: number;
+  name: string;
+  fullName: string;
+  owner: string;
+  isPrivate: boolean;
+  isFork: boolean;
+  htmlUrl: string;
+  cloneUrl: string;
+  sshUrl: string;
+  description: string | null;
+  language: string | null;
+  stars: number;
+  defaultBranch: string;
+  updatedAt: string;
+}
+
+export interface GitHubUserProfile {
+  login: string;
+  name: string | null;
+  avatarUrl: string | null;
+  htmlUrl: string | null;
+  scopes: string[];
+}
+
+export interface SshKeyInfo {
+  filename: string;
+  keyType: string;
+  comment: string;
+  publicKey: string;
+}
+
+export interface GitAuthStatus {
+  githubTokenConfigured: boolean;
+  githubUser: GitHubUserProfile | null;
+  sshAgentActive: boolean;
+  sshKeys: SshKeyInfo[];
+  sshAuthenticated: boolean;
+  sshUsername: string | null;
+}
+
+export interface ConfigureGithubTokenRequest {
+  token: string;
+  accountLabel?: string;
+}
+
+export interface SshAuthTestResult {
+  authenticated: boolean;
+  username: string | null;
+  output: string;
+}
+
+export interface RemoteInfo {
+  name: string;
+  url: string;
+  protocol: string;
+}
+
+export interface CommitSummary {
+  id: string;
+  summary: string;
+  author: string;
+  timestampMs: number;
+}
+
+export interface GitRemoteStatus {
+  isRepository: boolean;
+  currentBranch: string | null;
+  remotes: RemoteInfo[];
+  upstreamBranch: string | null;
+  ahead: number;
+  behind: number;
+  unpushedCommits: CommitSummary[];
+  isDirty: boolean;
+}
+
+export interface GitPushRequest {
+  remote?: string;
+  branch?: string;
+  force?: boolean;
+}
+
+export interface GitPushResponse {
+  success: boolean;
+  message: string;
+  remote: string;
+  branch: string;
+}
+
+export interface CloneRepositoryRequest {
+  url: string;
+  destinationParentDir: string;
+  directoryName?: string;
+}

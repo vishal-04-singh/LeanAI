@@ -27,14 +27,14 @@ export function Button({
 
   const variantStyles: Record<string, string> = {
     primary:
-      "bg-white hover:bg-ink-200 text-ink-950 font-medium border border-transparent shadow-xs active:bg-ink-300",
+      "bg-brand hover:bg-brand-light text-white font-medium border border-brand/80 shadow-xs active:opacity-90",
     default:
       "bg-ink-850 hover:bg-ink-800 text-ink-200 hover:text-white border border-ink-750 hover:border-ink-700 shadow-xs",
     secondary:
       "bg-ink-800 hover:bg-ink-750 text-ink-200 hover:text-white border border-ink-700 shadow-xs",
     danger: "bg-danger/10 hover:bg-danger/20 text-danger border border-danger/30 shadow-xs",
     ghost:
-      "bg-transparent hover:bg-ink-850 text-ink-400 hover:text-ink-200 border border-transparent",
+      "bg-transparent hover:bg-ink-800/70 text-ink-400 hover:text-ink-200 border border-transparent",
   };
 
   return (
@@ -155,15 +155,13 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2.5 rounded-lg border border-dashed border-ink-800 bg-ink-900/30 px-6 py-12 text-center">
+    <div className="flex flex-col items-center justify-center gap-3 px-6 py-16 text-center">
       {icon ? (
-        <div className="flex size-9 items-center justify-center rounded-md border border-ink-750 bg-ink-850 text-ink-300">
-          {icon}
-        </div>
+        <div className="mb-1">{icon}</div>
       ) : null}
-      <h3 className="text-xs font-semibold text-ink-100">{title}</h3>
-      <p className="max-w-md text-xs leading-relaxed text-ink-400">{body}</p>
-      {action ? <div className="mt-1">{action}</div> : null}
+      <h3 className="text-sm font-semibold text-ink-100">{title}</h3>
+      <p className="max-w-sm text-xs leading-relaxed text-ink-400">{body}</p>
+      {action ? <div className="mt-2">{action}</div> : null}
     </div>
   );
 }
@@ -292,4 +290,55 @@ export function formatBytes(bytes: number): string {
 
 export function formatNumber(value: number): string {
   return value.toLocaleString();
+}
+
+export function Modal({
+  open,
+  onClose,
+  title,
+  description,
+  children,
+  className = "",
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  description?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+        onClick={onClose}
+      />
+      <div
+        className={`relative z-10 w-full max-w-lg overflow-hidden rounded-xl border border-ink-800 bg-ink-900 shadow-2xl transition-all ${className}`}
+        role="dialog"
+        aria-modal="true"
+      >
+        <header className="flex items-start justify-between border-b border-ink-800/80 px-4 py-3 bg-ink-950/40">
+          <div>
+            <h3 className="text-sm font-semibold text-ink-100">{title}</h3>
+            {description && (
+              <p className="mt-0.5 text-xs text-ink-400 leading-normal">{description}</p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-ink-400 hover:text-ink-200 transition-colors p-1 rounded hover:bg-ink-800"
+            title="Close"
+          >
+            ✕
+          </button>
+        </header>
+
+        <div className="p-4">{children}</div>
+      </div>
+    </div>
+  );
 }

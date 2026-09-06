@@ -45,6 +45,13 @@ import type {
   RetrievalResult,
   TesterArtifact,
   RunTesterRequest,
+  GitAuthStatus,
+  SshAuthTestResult,
+  GitRemoteStatus,
+  GitPushRequest,
+  GitPushResponse,
+  CloneRepositoryRequest,
+  GitHubRepository,
 } from "./types";
 import { SCAN_PROGRESS_EVENT } from "./types";
 
@@ -105,6 +112,14 @@ export const COMMANDS = [
   "get_command_allowlist_command",
   "update_command_allowlist_command",
   "run_tester_step",
+  "get_git_auth_status",
+  "configure_github_token",
+  "disconnect_github",
+  "test_github_ssh",
+  "git_remote_status",
+  "git_push_branch",
+  "clone_remote_repository",
+  "list_github_repositories",
 ] as const;
 
 export type CommandName = (typeof COMMANDS)[number];
@@ -274,6 +289,19 @@ export const api = {
     call<void>("update_command_allowlist_command", { request: { commands } }),
   runTesterStep: (request: RunTesterRequest) =>
     call<TesterArtifact>("run_tester_step", { request }),
+  getGitAuthStatus: () => call<GitAuthStatus>("get_git_auth_status"),
+  configureGithubToken: (token: string, accountLabel?: string) =>
+    call<GitAuthStatus>("configure_github_token", {
+      request: { token, accountLabel: accountLabel ?? null },
+    }),
+  disconnectGithub: () => call<GitAuthStatus>("disconnect_github"),
+  testGithubSsh: () => call<SshAuthTestResult>("test_github_ssh"),
+  gitRemoteStatus: () => call<GitRemoteStatus>("git_remote_status"),
+  gitPushBranch: (request: GitPushRequest = {}) =>
+    call<GitPushResponse>("git_push_branch", { request }),
+  cloneRemoteRepository: (request: CloneRepositoryRequest) =>
+    call<OpenProjectResponse>("clone_remote_repository", { request }),
+  listGithubRepositories: () => call<GitHubRepository[]>("list_github_repositories"),
 };
 
 type ResolvedSelectionResponse = import("./types").ResolvedSelection;

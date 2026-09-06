@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { Button, Chip, Field, Panel, Toggle, formatBytes } from "../components/primitives";
+import { GitAuthSettings } from "../components/git/GitAuthSettings";
 import { api, toAppError } from "../ipc/client";
 import type { AuditEntry, BundleRecord, Diagnostics, Settings } from "../ipc/types";
 import { useAppStore } from "../store/useAppStore";
@@ -48,7 +49,6 @@ export function SettingsPage() {
     <div className="grid gap-4 lg:grid-cols-2">
       <Panel
         title="Privacy"
-        description="LeanAI is offline by default. These controls decide what it keeps on this device."
         actions={
           <Button variant="primary" onClick={() => store.saveSettings(draft)}>
             Save
@@ -57,112 +57,108 @@ export function SettingsPage() {
       >
         <Field
           label="Bundle history retention"
-          hint="Metadata means hashes, counts and the file list — never the file contents."
+          hint="Metadata refers to hashes, counts, and paths — never file contents."
         >
           <select
             value={draft.bundleRetention}
             onChange={(event) =>
               update({ bundleRetention: event.target.value as Settings["bundleRetention"] })
             }
-            className="rounded border border-ink-800 bg-ink-950 px-2 py-1 text-xs"
+            className="rounded border border-ink-800 bg-ink-950 px-2 py-1 text-xs text-ink-200"
           >
             <option value="metadata_only">Metadata only (default)</option>
             <option value="full_text">Metadata and bundle text</option>
             <option value="none">Keep nothing</option>
           </select>
         </Field>
-        <div className="mt-3">
+        <div className="mt-4 space-y-3">
           <Toggle
             checked={draft.requireExportConfirmation}
             onChange={(requireExportConfirmation) => update({ requireExportConfirmation })}
-            label="Require confirmation when the secret scan flags something"
-            hint="Turning this off does not make the scan more accurate; it only removes the prompt."
+            label="Require confirmation for secret scan warnings"
           />
           <Toggle
             checked={draft.telemetryOptIn}
             onChange={(telemetryOptIn) => update({ telemetryOptIn })}
             label="Send anonymous usage counts"
-            hint="Off by default. Never includes source text, bundle text, file paths or credentials."
+            hint="Never includes text, paths or credentials."
           />
         </div>
       </Panel>
 
-      <Panel
-        title="Scan policy"
-        description="Every limit exists for a reason, shown below. Changing one changes what a scan will accept."
-      >
-        <Toggle
-          checked={draft.policy.respectGitIgnore}
-          onChange={(respectGitIgnore) => update({ policy: { ...draft.policy, respectGitIgnore } })}
-          label="Respect .gitignore, .git/info/exclude and global git excludes"
-        />
-        <Toggle
-          checked={draft.policy.respectAiIgnore}
-          onChange={(respectAiIgnore) => update({ policy: { ...draft.policy, respectAiIgnore } })}
-          label="Respect .aiignore"
-        />
-        <Toggle
-          checked={draft.policy.excludeLockfiles}
-          onChange={(excludeLockfiles) => update({ policy: { ...draft.policy, excludeLockfiles } })}
-          label="Exclude dependency lockfiles"
-        />
-        <Toggle
-          checked={draft.policy.excludeGenerated}
-          onChange={(excludeGenerated) => update({ policy: { ...draft.policy, excludeGenerated } })}
-          label="Exclude generated, vendored and minified output"
-        />
-        <Toggle
-          checked={draft.policy.includeHidden}
-          onChange={(includeHidden) => update({ policy: { ...draft.policy, includeHidden } })}
-          label="Include hidden files"
-        />
-        <Toggle
-          checked={draft.policy.followSymlinks}
-          onChange={(followSymlinks) => update({ policy: { ...draft.policy, followSymlinks } })}
-          label="Follow symbolic links"
-          hint="Off by default: a link can point outside the project you approved."
-        />
-        <Field label="Maximum size of one file" hint="Larger files are excluded with a reason.">
-          <input
-            type="number"
-            min={1024}
-            step={1024}
-            value={draft.policy.limits.maxFileBytes}
-            onChange={(event) =>
-              update({
-                policy: {
-                  ...draft.policy,
-                  limits: { ...draft.policy.limits, maxFileBytes: Number(event.target.value) },
-                },
-              })
-            }
-            className="rounded border border-ink-800 bg-ink-950 px-2 py-1 text-xs"
+      <GitAuthSettings />
+
+      <Panel title="Scan policy">
+        <div className="space-y-3">
+          <Toggle
+            checked={draft.policy.respectGitIgnore}
+            onChange={(respectGitIgnore) => update({ policy: { ...draft.policy, respectGitIgnore } })}
+            label="Respect git excludes (.gitignore, global excludes)"
           />
-        </Field>
-        <p className="mt-2 text-[11px] text-ink-500">
-          Currently {formatBytes(draft.policy.limits.maxFileBytes)}.
-        </p>
-        <div className="mt-3 flex gap-2">
-          <Button variant="primary" onClick={() => store.saveSettings(draft)}>
-            Save policy
-          </Button>
-          <Button
-            onClick={async () => {
-              const reset = await api.resetSettings();
-              setDraft(reset);
-              store.setNotice("Settings restored to defaults.");
-            }}
-          >
-            Restore defaults
-          </Button>
+          <Toggle
+            checked={draft.policy.respectAiIgnore}
+            onChange={(respectAiIgnore) => update({ policy: { ...draft.policy, respectAiIgnore } })}
+            label="Respect .aiignore"
+          />
+          <Toggle
+            checked={draft.policy.excludeLockfiles}
+            onChange={(excludeLockfiles) => update({ policy: { ...draft.policy, excludeLockfiles } })}
+            label="Exclude dependency lockfiles"
+          />
+          <Toggle
+            checked={draft.policy.excludeGenerated}
+            onChange={(excludeGenerated) => update({ policy: { ...draft.policy, excludeGenerated } })}
+            label="Exclude generated and minified output"
+          />
+          <Toggle
+            checked={draft.policy.includeHidden}
+            onChange={(includeHidden) => update({ policy: { ...draft.policy, includeHidden } })}
+            label="Include hidden files"
+          />
+          <Toggle
+            checked={draft.policy.followSymlinks}
+            onChange={(followSymlinks) => update({ policy: { ...draft.policy, followSymlinks } })}
+            label="Follow symbolic links"
+          />
+          <Field label="Maximum size per file">
+            <input
+              type="number"
+              min={1024}
+              step={1024}
+              value={draft.policy.limits.maxFileBytes}
+              onChange={(event) =>
+                update({
+                  policy: {
+                    ...draft.policy,
+                    limits: { ...draft.policy.limits, maxFileBytes: Number(event.target.value) },
+                  },
+                })
+              }
+              className="rounded border border-ink-800 bg-ink-950 px-2 py-1 text-xs text-ink-200"
+            />
+          </Field>
+          <p className="mt-1 text-[11px] text-ink-500">
+            Currently {formatBytes(draft.policy.limits.maxFileBytes)}.
+          </p>
+          <div className="mt-4 flex gap-2">
+            <Button variant="primary" onClick={() => store.saveSettings(draft)}>
+              Save policy
+            </Button>
+            <Button
+              onClick={async () => {
+                const reset = await api.resetSettings();
+                setDraft(reset);
+                store.setNotice("Settings restored to defaults.");
+              }}
+            >
+              Restore defaults
+            </Button>
+          </div>
         </div>
       </Panel>
 
       {policy ? (
-        <Panel
-          title="Ignore precedence"
-          description="Later rules win. LeanAI's safety policy sits above your ignore files, so no rule can re-expose a credential path."
-        >
+        <Panel title="Ignore precedence">
           <ol className="space-y-1 text-xs">
             {policy.ignore_precedence.map((entry) => (
               <li key={entry.source} className="flex items-center gap-2">
@@ -171,7 +167,7 @@ export function SettingsPage() {
               </li>
             ))}
           </ol>
-          <h3 className="mt-4 text-xs font-semibold text-ink-300">Why each limit exists</h3>
+          <h3 className="mt-4 text-xs font-semibold text-ink-300">Why limits exist</h3>
           <dl className="mt-1 space-y-2 text-[11px]">
             {policy.limit_reasons.map((entry) => (
               <div key={entry.key}>
@@ -184,16 +180,13 @@ export function SettingsPage() {
       ) : null}
 
       {project ? (
-        <Panel
-          title=".aiignore"
-          description="Extra exclusions for LeanAI only. Preview the effect before writing the file."
-        >
+        <Panel title=".aiignore">
           <textarea
             value={aiIgnore.contents}
             onChange={(event) => setAiIgnore({ contents: event.target.value, preview: null })}
             rows={8}
             aria-label=".aiignore contents"
-            className="mono w-full rounded border border-ink-800 bg-ink-950 p-2 text-[11px] text-ink-300"
+            className="mono w-full rounded-md border border-ink-800 bg-ink-950 p-2.5 text-[11px] text-ink-300 focus:border-brand focus:outline-hidden"
           />
           <div className="mt-2 flex gap-2">
             <Button
@@ -220,7 +213,7 @@ export function SettingsPage() {
                 }
               }}
             >
-              Preview effect
+              Preview
             </Button>
             <Button
               variant="primary"
@@ -239,7 +232,7 @@ export function SettingsPage() {
             </Button>
           </div>
           {aiIgnore.preview ? (
-            <pre className="mt-2 rounded border border-ink-800 bg-ink-950 p-2 text-[11px] whitespace-pre-wrap text-ink-300">
+            <pre className="mt-2 rounded-md border border-ink-800 bg-ink-950 p-2.5 text-[11px] whitespace-pre-wrap text-ink-300">
               {aiIgnore.preview}
             </pre>
           ) : null}
@@ -249,10 +242,10 @@ export function SettingsPage() {
       {project ? (
         <Panel
           title="Local data"
-          description="Everything LeanAI stores about this project lives on this device."
           actions={
             <Button
               variant="danger"
+              size="sm"
               onClick={async () => {
                 const removed = await api.clearBundleHistory();
                 setHistory([]);
@@ -263,11 +256,11 @@ export function SettingsPage() {
             </Button>
           }
         >
-          <ul className="max-h-48 space-y-1 overflow-auto text-[11px]">
+          <ul className="max-h-48 space-y-1.5 overflow-auto text-[11px]">
             {history.map((record) => (
               <li
                 key={record.id}
-                className="flex justify-between gap-2 border-b border-ink-800 pb-1"
+                className="flex justify-between gap-2 border-b border-ink-800/60 pb-1.5"
               >
                 <span className="mono truncate text-ink-300">
                   {record.outputHash.slice(0, 16)}…
@@ -284,13 +277,10 @@ export function SettingsPage() {
       ) : null}
 
       {project ? (
-        <Panel
-          title="Audit log"
-          description="Every export and project write LeanAI performed, in order."
-        >
-          <ul className="max-h-48 space-y-1 overflow-auto text-[11px]">
+        <Panel title="Audit log">
+          <ul className="max-h-48 space-y-1.5 overflow-auto text-[11px]">
             {audit.map((entry) => (
-              <li key={entry.id} className="border-b border-ink-800 pb-1">
+              <li key={entry.id} className="border-b border-ink-800/60 pb-1.5">
                 <span className="text-ink-100">{entry.task}</span> <Chip>{entry.mode}</Chip>{" "}
                 <span className="text-ink-500">
                   {new Date(entry.startedAtMs).toLocaleString()} · {entry.status}
@@ -303,11 +293,8 @@ export function SettingsPage() {
       ) : null}
 
       {diagnostics ? (
-        <Panel
-          title="Diagnostics"
-          description="Safe to attach to a support request: no paths, no source, no credentials."
-        >
-          <dl className="grid grid-cols-2 gap-2 text-[11px]">
+        <Panel title="Diagnostics">
+          <dl className="grid grid-cols-2 gap-y-3 text-[11px]">
             <Row label="App version" value={diagnostics.appVersion} />
             <Row label="Platform" value={`${diagnostics.platform} / ${diagnostics.arch}`} />
             <Row
@@ -316,13 +303,13 @@ export function SettingsPage() {
             />
             <Row label="Policy version" value={`v${diagnostics.policyVersion}`} />
           </dl>
-          <h3 className="mt-3 text-xs font-semibold text-ink-300">Granted capabilities</h3>
-          <ul className="mt-1 space-y-0.5 text-[11px] text-ink-500">
+          <h3 className="mt-4 text-xs font-semibold text-ink-300">Granted capabilities</h3>
+          <ul className="mt-2 space-y-1 text-[11px] text-ink-500">
             {diagnostics.capabilities.map((capability) => (
               <li key={capability}>{capability}</li>
             ))}
           </ul>
-          <p className="mt-2 text-[11px] text-ink-500">{diagnostics.notice}</p>
+          <p className="mt-3 rounded bg-ink-950 p-2 text-[11px] text-ink-500">{diagnostics.notice}</p>
         </Panel>
       ) : null}
     </div>

@@ -10,30 +10,8 @@ import {
   ModelsIcon,
   OverviewIcon,
   SettingsIcon,
-  ShieldCheckIcon,
   TasksIcon,
 } from "../icons";
-
-function HardDriveIcon({ size = 13, className }: { size?: number; className?: string }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <line x1="22" y1="12" x2="2" y2="12" />
-      <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
-      <line x1="6" y1="16" x2="6.01" y2="16" />
-      <line x1="10" y1="16" x2="10.01" y2="16" />
-    </svg>
-  );
-}
 
 interface NavItem {
   route: Route;
@@ -59,31 +37,30 @@ export function Sidebar() {
     {
       route: "overview",
       aliases: ["workspace"],
-      label: "Mission Control",
+      label: "Overview",
       icon: OverviewIcon,
     },
     {
       route: "context",
       aliases: ["select", "preview"],
-      label: "Context Studio",
+      label: "Context",
       icon: ContextIcon,
       badge: selection.files.size > 0 ? selection.files.size : undefined,
       needsProject: true,
     },
     {
       route: "agents",
-      label: "Agent Fleet",
+      label: "Agents",
       icon: AgentsIcon,
-      badge: "6",
     },
     {
       route: "tasks",
-      label: "Task Workspace",
+      label: "Tasks",
       icon: TasksIcon,
     },
     {
       route: "history",
-      label: "Bundle History",
+      label: "History",
       icon: HistoryIcon,
       needsProject: true,
     },
@@ -92,12 +69,12 @@ export function Sidebar() {
   const systemNav: NavItem[] = [
     {
       route: "models",
-      label: "Models & Runtime",
+      label: "Models",
       icon: ModelsIcon,
     },
     {
       route: "settings",
-      label: "Preferences",
+      label: "Settings",
       icon: SettingsIcon,
     },
   ];
@@ -108,138 +85,87 @@ export function Sidebar() {
     return false;
   };
 
+  const NavButton = ({ item }: { item: NavItem }) => {
+    const active = isNavActive(item);
+    const disabled = Boolean(item.needsProject && !project);
+    const Icon = item.icon;
+
+    return (
+      <button
+        type="button"
+        onClick={() => setRoute(item.route)}
+        disabled={disabled}
+        aria-current={active ? "page" : undefined}
+        title={item.label}
+        className={`group relative flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-100 ${
+          active
+            ? "bg-brand/10 text-brand"
+            : disabled
+              ? "cursor-not-allowed text-ink-700"
+              : "text-ink-400 hover:bg-ink-800/60 hover:text-ink-200"
+        }`}
+      >
+        {active && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r bg-brand" />
+        )}
+        <Icon
+          size={14}
+          className={active ? "text-brand" : "text-ink-500 group-hover:text-ink-300 transition-colors"}
+        />
+        <span>{item.label}</span>
+        {item.badge !== undefined && (
+          <span
+            className={`ml-auto mono rounded px-1 py-px text-[9px] font-semibold ${
+              active ? "bg-brand/20 text-brand" : "bg-ink-800 text-ink-500"
+            }`}
+          >
+            {item.badge}
+          </span>
+        )}
+      </button>
+    );
+  };
+
   return (
-    <aside className="flex w-52 shrink-0 flex-col justify-between border-r border-ink-800/80 bg-ink-950 select-none">
-      {/* Navigation Sections */}
-      <div className="flex flex-col gap-4 p-2.5">
-        {/* Workspace Section */}
-        <div>
-          <div className="px-2 pb-1 text-[10px] font-mono uppercase tracking-wider text-ink-500">
-            Workspace
-          </div>
-          <nav aria-label="Workspace navigation" className="flex flex-col gap-0.5">
-            {workspaceNav.map((item) => {
-              const active = isNavActive(item);
-              const disabled = Boolean(item.needsProject && !project);
-              const Icon = item.icon;
+    <aside className="flex w-44 shrink-0 flex-col justify-between border-r border-ink-800/60 bg-ink-950 select-none">
+      {/* Nav */}
+      <div className="flex flex-col gap-5 p-2 pt-3">
+        <nav aria-label="Main navigation" className="flex flex-col gap-0.5">
+          {workspaceNav.map((item) => (
+            <NavButton key={item.route} item={item} />
+          ))}
+        </nav>
 
-              return (
-                <button
-                  key={item.route}
-                  type="button"
-                  onClick={() => setRoute(item.route)}
-                  disabled={disabled}
-                  aria-current={active ? "page" : undefined}
-                  className={`group flex items-center justify-between rounded px-2 py-1.5 text-xs font-medium transition-colors ${
-                    active
-                      ? "bg-ink-850 text-white font-medium shadow-2xs"
-                      : disabled
-                        ? "cursor-not-allowed text-ink-600 opacity-50"
-                        : "text-ink-400 hover:bg-ink-900 hover:text-ink-200"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Icon
-                      size={14}
-                      className={
-                        active
-                          ? "text-ink-100"
-                          : "text-ink-500 group-hover:text-ink-300 transition-colors"
-                      }
-                    />
-                    <span>{item.label}</span>
-                  </div>
-                  {item.badge !== undefined ? (
-                    <span
-                      className={`mono rounded px-1.5 py-0.2 text-[9px] font-medium ${
-                        active ? "bg-ink-750 text-ink-200" : "bg-ink-900 text-ink-500"
-                      }`}
-                    >
-                      {item.badge}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+        <div className="h-px bg-ink-800/60" />
 
-        {/* System Section */}
-        <div>
-          <div className="px-2 pb-1 text-[10px] font-mono uppercase tracking-wider text-ink-500">
-            System
-          </div>
-          <nav aria-label="System navigation" className="flex flex-col gap-0.5">
-            {systemNav.map((item) => {
-              const active = isNavActive(item);
-              const Icon = item.icon;
-
-              return (
-                <button
-                  key={item.route}
-                  type="button"
-                  onClick={() => setRoute(item.route)}
-                  aria-current={active ? "page" : undefined}
-                  className={`group flex items-center justify-between rounded px-2 py-1.5 text-xs font-medium transition-colors ${
-                    active
-                      ? "bg-ink-850 text-white font-medium shadow-2xs"
-                      : "text-ink-400 hover:bg-ink-900 hover:text-ink-200"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Icon
-                      size={14}
-                      className={
-                        active
-                          ? "text-ink-100"
-                          : "text-ink-500 group-hover:text-ink-300 transition-colors"
-                      }
-                    />
-                    <span>{item.label}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+        <nav aria-label="System navigation" className="flex flex-col gap-0.5">
+          {systemNav.map((item) => (
+            <NavButton key={item.route} item={item} />
+          ))}
+        </nav>
       </div>
 
-      {/* Sidebar Footer: System Status */}
-      <div className="border-t border-ink-800/80 p-2.5 space-y-1.5">
-        {/* Local Sidecar Status */}
-        <div
-          className="flex cursor-pointer items-center justify-between rounded border border-ink-800/70 bg-ink-900/40 p-2 text-xs hover:border-ink-700 transition-colors"
+      {/* Footer: sidecar dot */}
+      <div className="border-t border-ink-800/60 px-3 py-2.5">
+        <button
+          type="button"
           onClick={() => setRoute("models")}
-          title="Local Sidecar Runtime"
+          className="flex items-center gap-2 text-[11px] text-ink-500 hover:text-ink-300 transition-colors w-full"
+          title={`Sidecar: ${sidecarStatus.state}`}
         >
-          <div className="flex items-center gap-1.5 text-ink-400">
-            <HardDriveIcon size={12} />
-            <span className="text-[11px]">Sidecar</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`size-1.5 rounded-full ${
-                sidecarStatus.state === "ready"
-                  ? "bg-ok"
-                  : sidecarStatus.state === "starting"
-                    ? "bg-warn"
-                    : "bg-ink-600"
-              }`}
-            />
-            <span className="mono text-[10px] text-ink-400">
-              {sidecarStatus.state === "ready" ? `:${sidecarStatus.port}` : sidecarStatus.state}
-            </span>
-          </div>
-        </div>
-
-        {/* OS Keychain Status */}
-        <div className="flex items-center justify-between px-1 text-[10px] text-ink-500">
-          <div className="flex items-center gap-1">
-            <ShieldCheckIcon size={11} className="text-ok" />
-            <span>OS Keychain</span>
-          </div>
-          <span className="mono text-ok">Secured</span>
-        </div>
+          <span
+            className={`size-1.5 rounded-full shrink-0 ${
+              sidecarStatus.state === "ready"
+                ? "bg-ok"
+                : sidecarStatus.state === "starting"
+                  ? "bg-warn"
+                  : "bg-ink-700"
+            }`}
+          />
+          <span className="mono text-[10px]">
+            {sidecarStatus.state === "ready" ? `sidecar :${sidecarStatus.port}` : sidecarStatus.state}
+          </span>
+        </button>
       </div>
     </aside>
   );

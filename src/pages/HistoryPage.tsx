@@ -58,43 +58,42 @@ export function HistoryPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-ink-800/80 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <HistoryIcon size={18} className="text-ink-200" />
+            <HistoryIcon size={18} className="text-brand" />
             <h1 className="text-base font-bold text-white tracking-tight">
-              Bundle History & Audit Logs
+              History & Logs
             </h1>
           </div>
-          <p className="text-xs text-ink-400 mt-0.5">
-            Immutable records of every context bundle generated, exported, or inspected.
-          </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex rounded-md border border-ink-800 bg-ink-950 p-0.5">
+        <div className="flex items-center gap-2 mt-2 sm:mt-0">
+          <div className="flex bg-ink-900/60 rounded-lg p-1 border border-ink-800/60">
             <button
               type="button"
               onClick={() => setActiveTab("bundles")}
-              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                 activeTab === "bundles"
-                  ? "bg-ink-800 text-white"
+                  ? "bg-brand text-white shadow-xs"
                   : "text-ink-400 hover:text-ink-200"
               }`}
             >
-              Bundle Snapshots ({history.length})
+              Bundles ({history.length})
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("audit")}
-              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
-                activeTab === "audit" ? "bg-ink-800 text-white" : "text-ink-400 hover:text-ink-200"
+              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                activeTab === "audit" 
+                  ? "bg-brand text-white shadow-xs" 
+                  : "text-ink-400 hover:text-ink-200"
               }`}
             >
-              Audit Trail ({audit.length})
+              Audit ({audit.length})
             </button>
           </div>
 
           {activeTab === "bundles" && history.length > 0 && (
-            <Button variant="danger" size="xs" onClick={handleClearHistory}>
-              Clear Snapshots
+            <Button variant="danger" size="sm" onClick={handleClearHistory}>
+              Clear
             </Button>
           )}
         </div>
