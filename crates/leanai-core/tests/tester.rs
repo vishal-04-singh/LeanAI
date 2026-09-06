@@ -102,12 +102,12 @@ fn execute_tester_caps_large_output() {
     let fixture = Fixture::new();
     fixture.file("large.txt", "1234567890abcdefghijklmnopqrstuvwxyz");
 
-    let allowlist = vec!["cat".to_string(), "type".to_string()];
+    let allowlist = vec!["cat".to_string(), "type".to_string(), "cmd".to_string()];
 
     #[cfg(unix)]
     let cmd = "cat large.txt";
     #[cfg(windows)]
-    let cmd = "type large.txt";
+    let cmd = "cmd /c type large.txt";
 
     let artifact = execute_tester_command(cmd, fixture.root(), &allowlist, Some(10))
         .expect("execution succeeds");

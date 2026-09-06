@@ -6,6 +6,7 @@
 //! written to SQLite, logs, or error strings.
 
 use std::collections::HashMap;
+#[cfg(target_os = "macos")]
 use std::process::Command;
 use std::sync::{Arc, Mutex};
 
@@ -83,6 +84,7 @@ impl KeychainStore {
 
         #[cfg(not(target_os = "macos"))]
         {
+            let _ = (provider_id, account_label, secret);
             Err(AppError::new(
                 "keychain_unavailable",
                 "OS secure credential storage is unavailable on this platform.",
@@ -123,6 +125,7 @@ impl KeychainStore {
 
         #[cfg(not(target_os = "macos"))]
         {
+            let _ = provider_id;
             Err(AppError::new(
                 "keychain_unavailable",
                 "OS secure credential storage is unavailable on this platform.",
@@ -155,6 +158,7 @@ impl KeychainStore {
 
         #[cfg(not(target_os = "macos"))]
         {
+            let _ = provider_id;
             Err(AppError::new(
                 "keychain_unavailable",
                 "OS secure credential storage is unavailable on this platform.",
