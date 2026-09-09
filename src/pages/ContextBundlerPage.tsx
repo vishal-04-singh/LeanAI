@@ -425,7 +425,7 @@ export function ContextBundlerPage() {
         {/* PANE 2: Live Context Document & Markdown Viewer */}
         <div className="flex flex-col overflow-hidden rounded-lg border border-ink-800/80 bg-ink-900/60 shadow-2xs">
           {/* Header with Tabs and Actions */}
-          <div className="flex items-center justify-between border-b border-ink-800/80 px-3.5 py-2 bg-ink-950/40">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-800/80 px-3.5 py-2 bg-ink-950/40">
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
@@ -460,7 +460,7 @@ export function ContextBundlerPage() {
             </div>
 
             {/* Export Toolbar */}
-            <div className="flex items-center gap-1.5">
+            <div className="ml-auto flex shrink-0 items-center gap-1.5">
               <Button
                 variant="default"
                 size="xs"
@@ -473,6 +473,7 @@ export function ContextBundlerPage() {
               <Button
                 variant="primary"
                 size="xs"
+                className="shrink-0 whitespace-nowrap"
                 disabled={!bundle || selection.files.size === 0}
                 onClick={() => handleStartExport("file")}
               >
