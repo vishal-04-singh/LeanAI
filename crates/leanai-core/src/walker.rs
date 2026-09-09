@@ -262,21 +262,28 @@ fn classify_entry(
         );
     }
 
-    if size > policy.limits.max_file_bytes {
+    let (size_limit, limit_name) = classify::size_limit_for(relative, policy);
+    if size > size_limit {
+        let detail = if limit_name == "max_data_file_bytes" {
+            format!(
+                "{} of structured data exceeds the {} limit for data files. Data this large is token-dense and rarely useful as context.",
+                human_bytes(size),
+                human_bytes(size_limit)
+            )
+        } else {
+            format!(
+                "{} exceeds the {} limit for a single file.",
+                human_bytes(size),
+                human_bytes(size_limit)
+            )
+        };
         return build(
             relative,
             size,
             modified_ms,
             FileClass::TooLarge,
             policy,
-            Some(Exclusion::policy(
-                format!(
-                    "{} exceeds the {} limit for a single file.",
-                    human_bytes(size),
-                    human_bytes(policy.limits.max_file_bytes)
-                ),
-                Some("max_file_bytes".to_string()),
-            )),
+            Some(Exclusion::policy(detail, Some(limit_name.to_string()))),
             None,
         );
     }

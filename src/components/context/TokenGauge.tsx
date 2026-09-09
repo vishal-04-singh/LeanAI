@@ -16,7 +16,10 @@ export function TokenGauge({
   contextCap = 200000,
   inputPricePer1M = 3.0,
 }: TokenGaugeProps) {
-  const percentage = Math.min((tokens / contextCap) * 100, 100);
+  const ratio = tokens / contextCap;
+  const percentage = Math.min(ratio * 100, 100);
+  /** A selection that does not fit is the single most important thing to say. */
+  const overflows = tokens > contextCap;
 
   // Status zones: <32k green, 32k-128k amber, >128k red
   const zone =
@@ -33,19 +36,19 @@ export function TokenGauge({
       text: "text-ok",
       bar: "bg-ok",
       tone: "ok" as const,
-      badge: "Optimal (<32k)",
+      badge: "Comfortable",
     },
     balanced: {
       text: "text-warn",
       bar: "bg-warn",
       tone: "warn" as const,
-      badge: "Standard (32k–128k)",
+      badge: "Getting large",
     },
     heavy: {
       text: "text-danger",
       bar: "bg-danger",
       tone: "danger" as const,
-      badge: "Large (>128k)",
+      badge: "Too large for most windows",
     },
   };
 
@@ -58,7 +61,7 @@ export function TokenGauge({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <SparklesIcon size={12} className="text-ink-400" />
-          <h3 className="text-xs font-semibold text-ink-100">Token & Cost Intelligence</h3>
+          <h3 className="text-xs font-semibold text-ink-100">Token budget</h3>
         </div>
         <Chip tone={currentZone.tone} dot>
           {currentZone.badge}
@@ -77,15 +80,19 @@ export function TokenGauge({
           <p className="text-[10px] text-ink-500 mt-0.5">{label}</p>
         </div>
 
-        {/* Estimated Cost per Query */}
+        {/* Rough input cost. Deliberately imprecise: it is an estimated token
+            count multiplied by an assumed rate, so four decimal places would
+            imply accuracy this number does not have (FR-16). */}
         <div className="text-right">
           <div className="flex items-center justify-end gap-1 text-ink-200">
             <ZapIcon size={11} className="text-ink-400" />
             <span className="mono text-xs font-medium">
-              {tokens > 0 ? `$${estimatedCost.toFixed(4)}` : "$0.0000"}
+              {tokens > 0 ? `~$${estimatedCost < 0.01 ? "<0.01" : estimatedCost.toFixed(2)}` : "—"}
             </span>
           </div>
-          <p className="text-[10px] text-ink-500">per inference query</p>
+          <p className="text-[10px] text-ink-500">
+            input only · ${inputPricePer1M}/1M assumed
+          </p>
         </div>
       </div>
 
@@ -93,8 +100,10 @@ export function TokenGauge({
       <div className="mt-3.5">
         <div className="flex items-center justify-between text-[10px] text-ink-400 mb-1">
           <span>Target: {targetModel}</span>
-          <span className="mono">
-            {tokens > 0 ? `${percentage.toFixed(1)}%` : "0%"} of {formatNumber(contextCap / 1000)}k
+          <span className={`mono ${overflows ? "font-semibold text-danger" : ""}`}>
+            {overflows
+              ? `${formatNumber(tokens - contextCap)} over ${formatNumber(contextCap / 1000)}k`
+              : `${tokens > 0 ? percentage.toFixed(1) : 0}% of ${formatNumber(contextCap / 1000)}k`}
           </span>
         </div>
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink-800">
@@ -115,8 +124,9 @@ export function TokenGauge({
       {/* Compliance Disclaimer (FR-16) */}
       <div className="mt-3 rounded border border-ink-800/80 bg-ink-950/70 p-2 text-[10px] leading-relaxed text-ink-500">
         <span className="text-ink-400 font-medium">Notice: </span>
-        Estimates use the standard cl100k BPE tokenizer. Billed counts are calculated strictly by
-        provider tokenizers.
+        Token counts come from the cl100k BPE tokenizer, which is an OpenAI-family count. Other
+        providers tokenise differently and bill by their own count, so treat both the tokens and
+        the cost as indicative, never as a quote.
       </div>
     </div>
   );

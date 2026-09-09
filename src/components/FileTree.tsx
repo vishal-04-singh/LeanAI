@@ -92,39 +92,39 @@ export function classChip(entry: FileEntry) {
       return null;
     case "credential_sensitive":
       return (
-        <Chip tone="danger" title={entry.exclusion?.reason}>
+        <Chip tone="danger" title={entry.exclusion?.reason} className="shrink-0">
           ⚠ credential
         </Chip>
       );
     case "too_large":
       return (
-        <Chip tone="warn" title={entry.exclusion?.reason}>
+        <Chip tone="warn" title={entry.exclusion?.reason} className="shrink-0">
           too large
         </Chip>
       );
     case "binary":
-      return <Chip title={entry.exclusion?.reason}>binary</Chip>;
+      return <Chip title={entry.exclusion?.reason} className="shrink-0">binary</Chip>;
     case "lockfile":
-      return <Chip title={entry.exclusion?.reason}>lockfile</Chip>;
+      return <Chip title={entry.exclusion?.reason} className="shrink-0">lockfile</Chip>;
     case "generated":
-      return <Chip title={entry.exclusion?.reason}>generated</Chip>;
+      return <Chip title={entry.exclusion?.reason} className="shrink-0">generated</Chip>;
     case "hidden_metadata":
-      return <Chip title={entry.exclusion?.reason}>hidden</Chip>;
+      return <Chip title={entry.exclusion?.reason} className="shrink-0">hidden</Chip>;
     case "symlink":
       return (
-        <Chip tone="warn" title={entry.exclusion?.reason}>
+        <Chip tone="warn" title={entry.exclusion?.reason} className="shrink-0">
           symlink
         </Chip>
       );
     case "unsupported_encoding":
       return (
-        <Chip tone="warn" title={entry.exclusion?.reason}>
+        <Chip tone="warn" title={entry.exclusion?.reason} className="shrink-0">
           encoding
         </Chip>
       );
     case "unreadable":
       return (
-        <Chip tone="danger" title={entry.exclusion?.reason}>
+        <Chip tone="danger" title={entry.exclusion?.reason} className="shrink-0">
           unreadable
         </Chip>
       );
@@ -402,10 +402,20 @@ export function FileTree({
                 <button
                   type="button"
                   onClick={() => onRequestOverride(entry)}
-                  className="text-[11px] text-ink-400 underline decoration-dotted hover:text-white transition-colors"
+                  /* `shrink-0` + `whitespace-nowrap`: without them this wraps onto
+                     a second line and overflows the fixed-height virtualised row.
+                     `hover:text-white` also disappeared on a light background. */
+                  className="shrink-0 whitespace-nowrap text-[11px] text-ink-400 underline decoration-dotted transition-colors hover:text-ink-100"
                   tabIndex={-1}
+                  /* The visible word is short to fit the row; the label carries
+                     the file and the reason, which is what a screen reader
+                     needs to make sense of it. */
+                  aria-label={`Include ${entry.path} anyway, despite: ${
+                    entry.exclusion?.reason ?? entry.class
+                  }`}
+                  title={`Include ${entry.path} despite: ${entry.exclusion?.reason ?? entry.class}`}
                 >
-                  include anyway
+                  include
                 </button>
               ) : null}
               <span className="ml-auto shrink-0 text-[11px] text-ink-500">

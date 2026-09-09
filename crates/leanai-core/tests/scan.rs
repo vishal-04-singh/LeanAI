@@ -340,3 +340,80 @@ fn scan_large_tree_repository_performance() {
         duration, progress_count
     );
 }
+
+/// A build-tool output directory that no ignore file covers is still kept out
+/// of the selectable set. On LeanAI's own repository `src-tauri/gen/` was 43%
+/// of the total token count before this rule existed.
+#[test]
+fn build_tool_output_directories_are_marked_generated() {
+    let fixture = support::binary_heavy();
+    let inventory = scan_fixture(fixture.root(), ScanOptions::default());
+
+    let entry = inventory
+        .get("src-tauri/gen/schemas/desktop-schema.json")
+        .expect("the file is still listed, with a reason");
+    assert_eq!(entry.class, FileClass::Generated);
+    assert!(!entry.selectable);
+}
+
+/// Structured data is held to a much lower ceiling than source: a 128 KB JSON
+/// file passes the 1 MB code limit but is thousands of tokens of noise.
+#[test]
+fn large_data_files_are_excluded_by_a_separate_ceiling() {
+    let fixture = support::binary_heavy();
+    let inventory = scan_fixture(fixture.root(), ScanOptions::default());
+
+    let big = inventory.get("config/big-fixture.json").unwrap();
+    assert_eq!(big.class, FileClass::TooLarge);
+    assert!(!big.selectable);
+    let reason = &big.exclusion.as_ref().unwrap().reason;
+    assert!(reason.contains("structured data"), "{reason}");
+    assert_eq!(
+        big.exclusion.as_ref().unwrap().rule.as_deref(),
+        Some("max_data_file_bytes")
+    );
+
+    // A small JSON file is ordinary source text and stays selectable.
+    let small = inventory.get("config/small.json").unwrap();
+    assert_eq!(small.class, FileClass::SourceText);
+    assert!(small.selectable);
+}
+
+/// The data ceiling must not swallow ordinary source files of the same size.
+#[test]
+fn the_data_ceiling_does_not_apply_to_code() {
+    let fixture = support::Fixture::new();
+    fixture.file("src/big_module.ts", &"export const x = 1;\n".repeat(8_000));
+    let inventory = scan_fixture(fixture.root(), ScanOptions::default());
+
+    let entry = inventory.get("src/big_module.ts").unwrap();
+    assert!(
+        entry.size_bytes > 65_536,
+        "fixture must exceed the data ceiling"
+    );
+    assert_eq!(entry.class, FileClass::SourceText);
+    assert!(entry.selectable);
+}
+
+/// Settings written before `max_data_file_bytes` existed must still load, or
+/// upgrading LeanAI would silently reset every stored preference.
+#[test]
+fn limits_from_an_older_release_still_deserialize() {
+    let older = r#"{
+        "maxFileBytes": 2048,
+        "maxFilesScanned": 1000,
+        "maxSelectedFiles": 50,
+        "maxBundleBytes": 4096,
+        "binaryProbeBytes": 512,
+        "maxDepth": 8
+    }"#;
+
+    let limits: leanai_core::policy::Limits =
+        serde_json::from_str(older).expect("older settings must still parse");
+    assert_eq!(limits.max_file_bytes, 2048, "existing values are preserved");
+    assert_eq!(
+        limits.max_data_file_bytes,
+        Policy::default().limits.max_data_file_bytes,
+        "the new field falls back to its default rather than zero"
+    );
+}

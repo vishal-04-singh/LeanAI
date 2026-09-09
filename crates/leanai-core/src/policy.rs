@@ -12,6 +12,15 @@ pub struct Limits {
     /// Files larger than this are classified `TooLarge` and are not selectable
     /// without an explicit override.
     pub max_file_bytes: u64,
+    /// Separate, much lower ceiling for structured *data* files (JSON, YAML,
+    /// XML, CSV…). A 300 KB schema or fixture is thousands of tokens of almost
+    /// pure noise, and it passes a code-sized limit easily.
+    ///
+    /// Defaulted on deserialize so settings written before this field existed
+    /// still load; without it serde would reject the old JSON and every stored
+    /// preference would silently reset.
+    #[serde(default = "default_max_data_file_bytes")]
+    pub max_data_file_bytes: u64,
     /// Upper bound on files returned by a single scan.
     pub max_files_scanned: usize,
     /// Upper bound on files in one bundle.
@@ -24,10 +33,15 @@ pub struct Limits {
     pub max_depth: usize,
 }
 
+fn default_max_data_file_bytes() -> u64 {
+    65_536
+}
+
 impl Default for Limits {
     fn default() -> Self {
         Self {
             max_file_bytes: 1_048_576,
+            max_data_file_bytes: 65_536,
             max_files_scanned: 200_000,
             max_selected_files: 5_000,
             max_bundle_bytes: 64 * 1_048_576,
@@ -42,6 +56,10 @@ pub const LIMIT_REASONS: &[(&str, &str)] = &[
     (
         "max_file_bytes",
         "Very large files are usually generated or vendored and dominate a context budget. Override per file after reviewing it.",
+    ),
+    (
+        "max_data_file_bytes",
+        "Large JSON/YAML/XML/CSV files are data, not context: they are extremely token-dense and rarely help a model. Override per file if you really need one.",
     ),
     (
         "max_files_scanned",
@@ -298,8 +316,80 @@ pub const GENERATED_PATH_MARKERS: &[&str] = &[
     "/.next/",
     "/__generated__/",
     "/generated/",
+    // Build-tool output directories. `src-tauri/gen/` alone accounts for ~43%
+    // of this repository's own token count if it is left selectable.
+    "/gen/",
+    "/.gen/",
+    "/gen_/",
+    "/obj/",
+    "/bin/debug/",
+    "/bin/release/",
+    "/.dart_tool/",
+    "/.terraform/",
     "/vendor/",
     "/third_party/",
+];
+
+/// Path fragments that mark tests. Excluded from the "source code" recipe:
+/// useful when you are working *on* the tests, noise when you are not.
+pub const TEST_PATH_MARKERS: &[&str] = &[
+    "/test/",
+    "/tests/",
+    "/__tests__/",
+    "/spec/",
+    "/specs/",
+    "/e2e/",
+    "/__mocks__/",
+    "/testdata/",
+    "/fixtures/",
+    "/__snapshots__/",
+    "/cypress/",
+    "/playwright/",
+];
+
+/// Filename patterns that mark a test file wherever it lives.
+pub const TEST_FILE_MARKERS: &[&str] = &[
+    ".test.",
+    ".spec.",
+    "_test.",
+    "_spec.",
+    ".snap",
+    "conftest.py",
+];
+
+/// Documentation and example paths. Excluded from the "source code" recipe.
+pub const DOCS_PATH_MARKERS: &[&str] = &[
+    "/docs/",
+    "/doc/",
+    "/examples/",
+    "/example/",
+    "/samples/",
+    "/benches/",
+    "/benchmark/",
+    "/benchmarks/",
+    "/.github/",
+    "/website/",
+];
+
+/// Extensions treated as structured data rather than source. These are held to
+/// `Limits::max_data_file_bytes` instead of `max_file_bytes`.
+pub const DATA_EXTENSIONS: &[&str] = &[
+    "json",
+    "yaml",
+    "yml",
+    "xml",
+    "csv",
+    "tsv",
+    "ndjson",
+    "jsonl",
+    "plist",
+    "svg",
+    "geojson",
+    "graphql",
+    "sql",
+    "po",
+    "pot",
+    "properties",
 ];
 
 /// Filename suffixes that mark minified or map output.

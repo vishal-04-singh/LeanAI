@@ -6,7 +6,7 @@ use crate::error::{CoreError, Result};
 use crate::inventory::Inventory;
 use crate::project;
 use crate::selection::ResolvedSelection;
-use crate::tokenizer::{self, FileContribution, TokenEstimate};
+use crate::tokenizer::{self, EstimateKind, FileContribution, TokenEstimate};
 
 /// Every knob that changes bundle bytes. Two bundles with the same project
 /// revision, selection and options are byte-identical (FR-09).
@@ -74,6 +74,83 @@ pub struct Bundle {
 ///
 /// Reads files at build time rather than trusting scan-time content, and
 /// re-checks every path against the project root before opening it.
+/// One file rendered into its bundle section, with its own token count.
+struct RenderedFile {
+    path: String,
+    original_bytes: u64,
+    section: String,
+    tokens: usize,
+    truncation: Option<TruncationWarning>,
+}
+
+/// Reads and renders a single file. Touches nothing shared, so many of these
+/// can run in parallel.
+fn render_file(root: &Path, path: &str, options: &BundleOptions) -> Option<RenderedFile> {
+    let absolute = project::resolve_within_root(root, path).ok()?;
+    let raw = std::fs::read(&absolute).ok()?;
+    let original_bytes = raw.len() as u64;
+    let mut contents = String::from_utf8(raw).ok()?;
+
+    if options.normalize_line_endings {
+        contents = normalize_newlines(&contents);
+    }
+    let mut truncation = None;
+    if let Some(limit) = options.max_file_bytes {
+        if original_bytes > limit {
+            contents = truncate_at_char_boundary(&contents, limit as usize);
+            contents.push_str("\n… [truncated by LeanAI]\n");
+            truncation = Some(TruncationWarning {
+                path: path.to_string(),
+                original_bytes,
+                included_bytes: contents.len() as u64,
+            });
+        }
+    }
+    if options.line_numbers {
+        contents = with_line_numbers(&contents);
+    }
+
+    let mut section = String::with_capacity(contents.len() + 64);
+    if options.headers {
+        section.push_str(&header(path, original_bytes, &contents, options));
+    }
+    if options.code_fences {
+        section.push_str("```");
+        section.push_str(language_hint(path));
+        section.push('\n');
+    }
+    section.push_str(&contents);
+    if !contents.ends_with('\n') {
+        section.push('\n');
+    }
+    if options.code_fences {
+        section.push_str("```\n");
+    }
+    section.push('\n');
+
+    let tokens = tokenizer::estimate(&section).value;
+    Some(RenderedFile {
+        path: path.to_string(),
+        original_bytes,
+        section,
+        tokens,
+        truncation,
+    })
+}
+
+/// Builds the bundle text from a resolved selection.
+///
+/// Reads files at build time rather than trusting scan-time content, and
+/// re-checks every path against the project root before opening it.
+///
+/// # Cost
+///
+/// Tokenising dominates: reading a 1 MB selection takes single-digit
+/// milliseconds, while one `cl100k_base` pass over it takes hundreds. So this
+/// performs exactly **one** encode per file and never re-encodes the assembled
+/// document — the total is the sum of its parts, which also makes the per-file
+/// shares add up to 100%. Files render on one thread per core; order is
+/// restored afterwards, so output stays byte-identical (FR-09).
 pub fn build(
     root: &Path,
     inventory: &Inventory,
@@ -81,80 +158,73 @@ pub fn build(
     options: &BundleOptions,
 ) -> Result<Bundle> {
     let root = project::canonical_root(root)?;
-    let mut text = String::new();
-    let mut parts: Vec<(String, u64, usize)> = Vec::new();
+
+    let mut preamble = String::new();
+    if options.include_tree && !selection.files.is_empty() {
+        preamble.push_str("# Project files\n\n```\n");
+        preamble.push_str(&render_tree(&selection.files));
+        preamble.push_str("```\n\n");
+    }
+    let preamble_tokens = if preamble.is_empty() {
+        0
+    } else {
+        tokenizer::estimate(&preamble).value
+    };
+
+    let paths: Vec<&str> = selection.files.iter().map(String::as_str).collect();
+    let workers = std::thread::available_parallelism()
+        .map(|value| value.get())
+        .unwrap_or(1)
+        .min(paths.len().max(1));
+
+    // One `Option` slot per input path preserves ordering, so a file that fails
+    // to render is reported as skipped without shifting anything after it.
+    let rendered: Vec<Option<RenderedFile>> = if workers <= 1 || paths.len() < 8 {
+        paths
+            .iter()
+            .map(|path| render_file(&root, path, options))
+            .collect()
+    } else {
+        let chunk_size = paths.len().div_ceil(workers);
+        let root_ref = &root;
+        std::thread::scope(|scope| {
+            let handles: Vec<_> = paths
+                .chunks(chunk_size)
+                .map(|chunk| {
+                    scope.spawn(move || {
+                        chunk
+                            .iter()
+                            .map(|path| render_file(root_ref, path, options))
+                            .collect::<Vec<_>>()
+                    })
+                })
+                .collect();
+            handles
+                .into_iter()
+                .flat_map(|handle| handle.join().unwrap_or_default())
+                .collect()
+        })
+    };
+
+    let mut text = String::with_capacity(selection.total_bytes as usize + 1024);
+    text.push_str(&preamble);
+    let mut parts: Vec<(String, u64, usize)> = Vec::with_capacity(paths.len());
     let mut truncations = Vec::new();
     let mut skipped = Vec::new();
+    let mut total_tokens = preamble_tokens;
 
-    if options.include_tree && !selection.files.is_empty() {
-        text.push_str("# Project files\n\n```\n");
-        text.push_str(&render_tree(&selection.files));
-        text.push_str("```\n\n");
-    }
-
-    for path in &selection.files {
-        let absolute = match project::resolve_within_root(&root, path) {
-            Ok(absolute) => absolute,
-            Err(_) => {
-                skipped.push(path.clone());
-                continue;
+    for (index, slot) in rendered.into_iter().enumerate() {
+        match slot {
+            Some(file) => {
+                text.push_str(&file.section);
+                total_tokens += file.tokens;
+                if let Some(truncation) = file.truncation {
+                    truncations.push(truncation);
+                }
+                parts.push((file.path, file.original_bytes, file.tokens));
             }
-        };
-        let raw = match std::fs::read(&absolute) {
-            Ok(raw) => raw,
-            Err(_) => {
-                skipped.push(path.clone());
-                continue;
-            }
-        };
-        let original_bytes = raw.len() as u64;
-        let Ok(mut contents) = String::from_utf8(raw) else {
-            skipped.push(path.clone());
-            continue;
-        };
-
-        if options.normalize_line_endings {
-            contents = normalize_newlines(&contents);
+            None => skipped.push(paths[index].to_string()),
         }
-        if let Some(limit) = options.max_file_bytes {
-            if original_bytes > limit {
-                contents = truncate_at_char_boundary(&contents, limit as usize);
-                contents.push_str("\n… [truncated by LeanAI]\n");
-                truncations.push(TruncationWarning {
-                    path: path.clone(),
-                    original_bytes,
-                    included_bytes: contents.len() as u64,
-                });
-            }
-        }
-        if options.line_numbers {
-            contents = with_line_numbers(&contents);
-        }
-
-        let section_start = text.len();
-        if options.headers {
-            text.push_str(&header(path, original_bytes, &contents, options));
-        }
-        if options.code_fences {
-            text.push_str("```");
-            text.push_str(language_hint(path));
-            text.push('\n');
-        }
-        text.push_str(&contents);
-        if !contents.ends_with('\n') {
-            text.push('\n');
-        }
-        if options.code_fences {
-            text.push_str("```\n");
-        }
-        text.push('\n');
-
-        let section = &text[section_start..];
-        parts.push((
-            path.clone(),
-            original_bytes,
-            tokenizer::estimate(section).value,
-        ));
     }
 
     if options.include_front_matter {
@@ -163,14 +233,22 @@ pub fn build(
             inventory,
             selection,
             options,
-            &tokenizer::estimate(&text),
+            &TokenEstimate {
+                value: total_tokens,
+                kind: EstimateKind::local(),
+            },
             &truncations,
             &skipped,
         );
-        text = format!("{}\n{}", manifest.to_front_matter(), text);
+        let front_matter = format!("{}\n", manifest.to_front_matter());
+        total_tokens += tokenizer::estimate(&front_matter).value;
+        text = format!("{front_matter}{text}");
     }
 
-    let estimate = tokenizer::estimate(&text);
+    let estimate = TokenEstimate {
+        value: total_tokens,
+        kind: EstimateKind::local(),
+    };
     let contributions = tokenizer::contributions(&parts, estimate.value);
     let byte_len = text.len() as u64;
 

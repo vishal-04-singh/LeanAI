@@ -5,7 +5,10 @@ use leanai_core::concat::{self, Bundle, BundleOptions};
 use leanai_core::manifest::BundleManifest;
 use leanai_core::project;
 use leanai_core::secrets::{self, SecretReport};
-use leanai_core::selection::{self, ResolvedSelection, SelectionSpec, TriState};
+use leanai_core::selection::{
+    self, DirectorySummary, ResolvedSelection, SelectionRecipe, SelectionSpec, SuggestedSelection,
+    TriState,
+};
 use leanai_core::tokenizer;
 
 use crate::app_state::AppState;
@@ -60,6 +63,32 @@ pub async fn directory_states(
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct SuggestSelectionRequest {
+    pub recipe: SelectionRecipe,
+}
+
+/// Proposes a starting selection so opening a repository does not begin with
+/// clicking every checkbox. The rule lives in `leanai-core`, so it cannot
+/// propose anything the policy blocks.
+#[tauri::command]
+pub async fn suggest_selection(
+    state: State<'_, AppState>,
+    request: SuggestSelectionRequest,
+) -> AppResult<SuggestedSelection> {
+    let session = state.require_session()?;
+    Ok(selection::suggest(&session.inventory, request.recipe))
+}
+
+/// Every directory holding at least one selectable file, with its totals, for
+/// the folder picker.
+#[tauri::command]
+pub async fn directory_summaries(state: State<'_, AppState>) -> AppResult<Vec<DirectorySummary>> {
+    let session = state.require_session()?;
+    Ok(selection::directory_summaries(&session.inventory))
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BuildBundleRequest {
     pub selection: SelectionSpec,
     pub options: BundleOptions,
@@ -93,8 +122,16 @@ pub struct BundlePreview {
     pub file_count: usize,
 }
 
+/// Characters of bundle text sent to the UI for display.
+///
+/// The preview is read by a human in a scroll box, and it crosses the IPC
+/// boundary on every rebuild. 400 KB of it was pure transfer cost for text
+/// nobody scrolls to; every number shown alongside still covers the full
+/// bundle, and the UI says the preview is shortened.
+const PREVIEW_LIMIT: usize = 64_000;
+
 fn preview_of(bundle: Bundle, limit: Option<usize>) -> BundlePreview {
-    let limit = limit.unwrap_or(400_000);
+    let limit = limit.unwrap_or(PREVIEW_LIMIT);
     let truncated = bundle.text.len() > limit;
     let mut preview = bundle.text;
     if truncated {

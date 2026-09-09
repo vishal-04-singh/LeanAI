@@ -230,6 +230,14 @@ pub fn binary_heavy() -> Fixture {
     // generated-suffix rule rather than the skipped-directory rule.
     fixture.file("dist/bundle.min.js", "!function(){}();\n");
     fixture.file("public/app.min.js", "!function(){}();\n");
+    // Build-tool output that no ignore file covers, plus a data file that is
+    // small enough for the code limit but far too large to be useful context.
+    fixture.file(
+        "src-tauri/gen/schemas/desktop-schema.json",
+        "{\"generated\": true}\n",
+    );
+    fixture.bytes("config/big-fixture.json", &vec![b'0'; 128 * 1024]);
+    fixture.file("config/small.json", "{\"ok\": true}\n");
     fixture
 }
 

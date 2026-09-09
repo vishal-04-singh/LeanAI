@@ -75,7 +75,7 @@ describe("FileTree", () => {
   it("routes a blocked file through the override flow instead of selecting it", async () => {
     const user = userEvent.setup();
     const props = setup();
-    await user.click(screen.getByRole("button", { name: "include anyway" }));
+    await user.click(screen.getByRole("button", { name: /^Include \.env anyway, despite/ }));
     expect(props.onRequestOverride).toHaveBeenCalledWith(expect.objectContaining({ path: ".env" }));
     expect(props.onToggleFile).not.toHaveBeenCalled();
   });

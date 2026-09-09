@@ -37,9 +37,18 @@ mod macos_dock {
             let sel_shared_app = sel_registerName(c"sharedApplication".as_ptr());
             let sel_set_icon = sel_registerName(c"setApplicationIconImage:".as_ptr());
 
-            let msg_send_data: unsafe extern "C" fn(*mut c_void, *mut c_void, *const u8, usize) -> *mut c_void =
-                std::mem::transmute(objc_msgSend as *const ());
-            let data = msg_send_data(ns_data_class, sel_data_with_bytes, icon_bytes.as_ptr(), icon_bytes.len());
+            let msg_send_data: unsafe extern "C" fn(
+                *mut c_void,
+                *mut c_void,
+                *const u8,
+                usize,
+            ) -> *mut c_void = std::mem::transmute(objc_msgSend as *const ());
+            let data = msg_send_data(
+                ns_data_class,
+                sel_data_with_bytes,
+                icon_bytes.as_ptr(),
+                icon_bytes.len(),
+            );
             if data.is_null() {
                 return;
             }
@@ -51,8 +60,11 @@ mod macos_dock {
                 return;
             }
 
-            let msg_send_one_arg: unsafe extern "C" fn(*mut c_void, *mut c_void, *mut c_void) -> *mut c_void =
-                std::mem::transmute(objc_msgSend as *const ());
+            let msg_send_one_arg: unsafe extern "C" fn(
+                *mut c_void,
+                *mut c_void,
+                *mut c_void,
+            ) -> *mut c_void = std::mem::transmute(objc_msgSend as *const ());
             let image = msg_send_one_arg(raw_image, sel_init_with_data, data);
             if image.is_null() {
                 return;
@@ -105,6 +117,8 @@ pub fn run() {
             commands::projects::write_ai_ignore,
             commands::projects::forget_project,
             commands::bundles::resolve_selection,
+            commands::bundles::suggest_selection,
+            commands::bundles::directory_summaries,
             commands::bundles::directory_states,
             commands::bundles::build_bundle,
             commands::bundles::export_preflight,

@@ -429,3 +429,97 @@ fn oversized_files_are_truncated_with_a_warning() {
     assert_eq!(bundle.truncations.len(), 1);
     assert!(bundle.text.contains("[truncated by LeanAI]"));
 }
+
+/// A recipe is the answer to "why must I click a hundred checkboxes?" — it
+/// proposes a starting selection instead of an empty one.
+#[test]
+fn the_source_recipe_leaves_out_tests_docs_and_examples() {
+    let fixture = support::small_app();
+    fixture.file("src/greet.test.ts", "test('greets', () => {});\n");
+    fixture.file("tests/e2e/checkout.ts", "export const flow = 1;\n");
+    fixture.file("docs/architecture.md", "# Architecture\n");
+    fixture.file("examples/demo.ts", "export const demo = 1;\n");
+    fixture.file("src/api/handler.ts", "export function handle() {}\n");
+
+    let inventory = inventory_of(fixture.root());
+    let suggestion = selection::suggest(&inventory, selection::SelectionRecipe::SourceOnly);
+
+    assert!(suggestion.files.contains(&"src/api/handler.ts".to_string()));
+    assert!(suggestion.files.contains(&"src/index.ts".to_string()));
+    for excluded in [
+        "src/greet.test.ts",
+        "tests/e2e/checkout.ts",
+        "docs/architecture.md",
+        "examples/demo.ts",
+    ] {
+        assert!(
+            !suggestion.files.contains(&excluded.to_string()),
+            "{excluded} should not be in the source recipe"
+        );
+    }
+    assert_eq!(suggestion.skipped_by_recipe, 4);
+    assert!(suggestion.description.contains("leaving out tests"));
+}
+
+/// The tests recipe is the mirror image, for when the suite is the task.
+#[test]
+fn the_tests_recipe_selects_only_tests() {
+    let fixture = support::small_app();
+    fixture.file("src/greet.test.ts", "test('greets', () => {});\n");
+    let inventory = inventory_of(fixture.root());
+
+    let suggestion = selection::suggest(&inventory, selection::SelectionRecipe::TestsOnly);
+    assert_eq!(suggestion.files, vec!["src/greet.test.ts".to_string()]);
+}
+
+/// No recipe can propose a file the policy blocks — a recipe is a shortcut
+/// through the *allowed* set, never around it (FR-08).
+#[test]
+fn recipes_never_propose_a_blocked_file() {
+    let fixture = support::secrets_repo();
+    let inventory = inventory_of(fixture.root());
+
+    for recipe in [
+        selection::SelectionRecipe::SourceOnly,
+        selection::SelectionRecipe::Everything,
+        selection::SelectionRecipe::TestsOnly,
+    ] {
+        let suggestion = selection::suggest(&inventory, recipe);
+        for blocked in [".env", "deploy/id_rsa", "deploy/service-account.json"] {
+            assert!(
+                !suggestion.files.contains(&blocked.to_string()),
+                "{recipe:?} proposed {blocked}"
+            );
+        }
+    }
+}
+
+/// Directory summaries let a folder picker show real weight per folder, and
+/// each directory counts its whole subtree.
+#[test]
+fn directory_summaries_roll_up_the_subtree() {
+    let fixture = support::small_app();
+    let inventory = inventory_of(fixture.root());
+    let summaries = selection::directory_summaries(&inventory);
+
+    let src = summaries
+        .iter()
+        .find(|summary| summary.path == "src")
+        .expect("src is summarised");
+    // src/index.ts, src/greet.ts and src/util/format.ts
+    assert_eq!(src.selectable_files, 3);
+    assert_eq!(src.depth, 0);
+
+    let util = summaries
+        .iter()
+        .find(|summary| summary.path == "src/util")
+        .expect("nested directories are summarised too");
+    assert_eq!(util.selectable_files, 1);
+    assert_eq!(util.depth, 1);
+    assert!(src.total_bytes > util.total_bytes);
+
+    // Directories holding no selectable file are not offered.
+    assert!(!summaries
+        .iter()
+        .any(|summary| summary.selectable_files == 0));
+}

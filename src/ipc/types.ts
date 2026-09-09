@@ -64,6 +64,7 @@ export interface Inventory {
 
 export interface Limits {
   maxFileBytes: number;
+  maxDataFileBytes: number;
   maxFilesScanned: number;
   maxSelectedFiles: number;
   maxBundleBytes: number;
@@ -114,6 +115,24 @@ export interface ResolvedSelection {
 }
 
 export type TriState = "unchecked" | "partial" | "checked";
+
+export type SelectionRecipe = "source_only" | "everything" | "tests_only";
+
+export interface SuggestedSelection {
+  recipe: SelectionRecipe;
+  files: string[];
+  totalBytes: number;
+  /** Selectable files the recipe deliberately left out. */
+  skippedByRecipe: number;
+  description: string;
+}
+
+export interface DirectorySummary {
+  path: string;
+  depth: number;
+  selectableFiles: number;
+  totalBytes: number;
+}
 
 export type EstimateKind =
   | { kind: "openai_family_estimate"; tokenizer: string }

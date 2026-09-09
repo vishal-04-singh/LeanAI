@@ -1,8 +1,10 @@
 import { create } from "zustand";
 
 import { api, toAppError } from "../ipc/client";
+import { applyTheme, resolveInitialTheme, type Theme } from "../theme";
 import type {
   AppError,
+  SelectionRecipe,
   BuildBundleResponse,
   BundleOptions,
   ContextResponse,
@@ -58,6 +60,7 @@ export function toSpec(selection: SelectionState): SelectionSpec {
 
 interface AppStore {
   route: Route;
+  theme: Theme;
   project: ProjectRecord | null;
   git: GitState | null;
   remoteStatus: GitRemoteStatus | null;
@@ -99,6 +102,7 @@ interface AppStore {
   toggleDirectory: (directory: string, selected: boolean, paths: string[]) => void;
   addOverride: (path: string) => void;
   selectPaths: (paths: string[], replace: boolean) => void;
+  applyRecipe: (recipe: SelectionRecipe) => Promise<void>;
   clearSelection: () => void;
 
   setOptions: (options: Partial<BundleOptions>) => void;
@@ -108,10 +112,13 @@ interface AppStore {
   generateContext: () => Promise<void>;
 
   saveSettings: (settings: Settings) => Promise<void>;
+  setTheme: (theme: Theme) => void;
+  toggleTheme: () => void;
 }
 
 export const useAppStore = create<AppStore>((set, get) => ({
   route: "overview",
+  theme: resolveInitialTheme(),
   project: null,
   git: null,
   remoteStatus: null,
@@ -177,6 +184,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
         .loadRemoteStatus()
         .catch(() => undefined);
       await get().scan();
+      // Opening a repository should not begin with an empty canvas and a
+      // hundred checkboxes. Rescan deliberately does not do this.
+      if (get().selection.files.size === 0) {
+        await get().applyRecipe("source_only");
+      }
       await get().loadContext();
     } catch (error) {
       set({ error: toAppError(error) });
@@ -285,6 +297,28 @@ export const useAppStore = create<AppStore>((set, get) => ({
       return { selection: { ...state.selection, files }, bundle: null };
     }),
 
+  /**
+   * Applies a one-click starting selection. The rule is evaluated in the Rust
+   * core against the current scan, so it can only ever propose files the
+   * safety policy already allows.
+   */
+  applyRecipe: async (recipe) => {
+    try {
+      const suggestion = await api.suggestSelection(recipe);
+      get().selectPaths(suggestion.files, true);
+      set({
+        notice:
+          `Selected ${suggestion.files.length} files — ${suggestion.description}` +
+          (suggestion.skippedByRecipe > 0
+            ? ` ${suggestion.skippedByRecipe} other selectable files were left out.`
+            : ""),
+        error: null,
+      });
+    } catch (error) {
+      set({ error: toAppError(error) });
+    }
+  },
+
   clearSelection: () => set({ selection: emptySelection(), bundle: null }),
 
   setOptions: (partial) =>
@@ -321,6 +355,17 @@ export const useAppStore = create<AppStore>((set, get) => ({
     } catch (error) {
       set({ error: toAppError(error) });
     }
+  },
+
+  setTheme: (theme) => {
+    applyTheme(theme);
+    set({ theme });
+  },
+
+  toggleTheme: () => {
+    const next: Theme = get().theme === "dark" ? "light" : "dark";
+    applyTheme(next);
+    set({ theme: next });
   },
 
   saveSettings: async (settings) => {
@@ -400,6 +445,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
         .loadRemoteStatus()
         .catch(() => undefined);
       await get().scan();
+      // Opening a repository should not begin with an empty canvas and a
+      // hundred checkboxes. Rescan deliberately does not do this.
+      if (get().selection.files.size === 0) {
+        await get().applyRecipe("source_only");
+      }
       await get().loadContext();
     } catch (error) {
       const appErr = toAppError(error);

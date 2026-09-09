@@ -29,9 +29,9 @@ export function Button({
     primary:
       "bg-brand hover:bg-brand-light text-white font-medium border border-brand/80 shadow-xs active:opacity-90",
     default:
-      "bg-ink-850 hover:bg-ink-800 text-ink-200 hover:text-white border border-ink-750 hover:border-ink-700 shadow-xs",
+      "bg-ink-850 hover:bg-ink-800 text-ink-200 hover:text-ink-100 border border-ink-750 hover:border-ink-700 shadow-xs",
     secondary:
-      "bg-ink-800 hover:bg-ink-750 text-ink-200 hover:text-white border border-ink-700 shadow-xs",
+      "bg-ink-800 hover:bg-ink-750 text-ink-200 hover:text-ink-100 border border-ink-700 shadow-xs",
     danger: "bg-danger/10 hover:bg-danger/20 text-danger border border-danger/30 shadow-xs",
     ghost:
       "bg-transparent hover:bg-ink-800/70 text-ink-400 hover:text-ink-200 border border-transparent",
@@ -289,7 +289,10 @@ export function formatBytes(bytes: number): string {
 }
 
 export function formatNumber(value: number): string {
-  return value.toLocaleString();
+  // Pinned to en-US grouping on purpose: token counts are a technical quantity
+  // and locale-specific grouping (2,14,642 under en-IN) reads as a different
+  // number to most people looking at a token budget.
+  return value.toLocaleString("en-US");
 }
 
 export function Modal({

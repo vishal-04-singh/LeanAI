@@ -5,8 +5,9 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
 use crate::policy::{
-    IgnoreSource, Policy, ALWAYS_SKIPPED_DIRS, BINARY_EXTENSIONS, GENERATED_PATH_MARKERS,
-    GENERATED_SUFFIXES, LOCKFILE_NAMES, SENSITIVE_PATH_PATTERNS,
+    IgnoreSource, Policy, ALWAYS_SKIPPED_DIRS, BINARY_EXTENSIONS, DATA_EXTENSIONS,
+    DOCS_PATH_MARKERS, GENERATED_PATH_MARKERS, GENERATED_SUFFIXES, LOCKFILE_NAMES,
+    SENSITIVE_PATH_PATTERNS, TEST_FILE_MARKERS, TEST_PATH_MARKERS,
 };
 
 /// How LeanAI classifies a path. Mirrors backlog item 2.3.
@@ -152,6 +153,45 @@ pub fn is_generated_path(relative: &str) -> bool {
 
 pub fn is_always_skipped_dir(name: &str) -> bool {
     ALWAYS_SKIPPED_DIRS.contains(&name)
+}
+
+/// True for tests, test data and snapshots.
+pub fn is_test_path(relative: &str) -> bool {
+    let normalized = format!("/{}", normalize(relative));
+    if TEST_PATH_MARKERS
+        .iter()
+        .any(|marker| normalized.contains(marker))
+    {
+        return true;
+    }
+    file_name(relative).is_some_and(|name| {
+        TEST_FILE_MARKERS.iter().any(|marker| name.contains(marker))
+            || name.starts_with("test_")
+            || name.starts_with("Test")
+    })
+}
+
+/// True for documentation, examples and benchmark paths.
+pub fn is_docs_path(relative: &str) -> bool {
+    let normalized = format!("/{}", normalize(relative));
+    DOCS_PATH_MARKERS
+        .iter()
+        .any(|marker| normalized.contains(marker))
+}
+
+/// True for structured data files, which are held to a lower size ceiling than
+/// source: they are token-dense and rarely useful as context.
+pub fn is_data_file(relative: &str) -> bool {
+    extension(relative).is_some_and(|ext| DATA_EXTENSIONS.contains(&ext.as_str()))
+}
+
+/// The size ceiling that applies to this path.
+pub fn size_limit_for(relative: &str, policy: &Policy) -> (u64, &'static str) {
+    if is_data_file(relative) {
+        (policy.limits.max_data_file_bytes, "max_data_file_bytes")
+    } else {
+        (policy.limits.max_file_bytes, "max_file_bytes")
+    }
 }
 
 pub fn has_binary_extension(relative: &str) -> bool {

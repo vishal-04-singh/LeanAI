@@ -3,6 +3,9 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 
 import type {
   AiIgnoreFile,
+  DirectorySummary,
+  SelectionRecipe,
+  SuggestedSelection,
   AiIgnorePreview,
   AppError,
   AuditEntry,
@@ -69,6 +72,8 @@ export const COMMANDS = [
   "write_ai_ignore",
   "forget_project",
   "resolve_selection",
+  "suggest_selection",
+  "directory_summaries",
   "directory_states",
   "build_bundle",
   "export_preflight",
@@ -173,6 +178,9 @@ export const api = {
 
   resolveSelection: (selection: SelectionSpec) =>
     call<ResolvedSelectionResponse>("resolve_selection", { request: { selection } }),
+  suggestSelection: (recipe: SelectionRecipe) =>
+    call<SuggestedSelection>("suggest_selection", { request: { recipe } }),
+  directorySummaries: () => call<DirectorySummary[]>("directory_summaries"),
   directoryStates: (directories: string[], selected: string[]) =>
     call<Record<string, TriState>>("directory_states", { request: { directories, selected } }),
   buildBundle: (selection: SelectionSpec, options: BundleOptions, previewLimit?: number) =>

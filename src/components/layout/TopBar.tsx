@@ -7,16 +7,18 @@ import {
   DownloadCloudIcon,
   GitBranchIcon,
   LogoIcon,
+  MoonIcon,
   RefreshCwIcon,
   SearchIcon,
   SettingsIcon,
+  SunIcon,
   UploadCloudIcon,
 } from "../icons";
 import { GitSyncModal } from "../git/GitSyncModal";
 import { CloneRepoModal } from "../git/CloneRepoModal";
 
 export function TopBar({ onOpenCommandPalette }: { onOpenCommandPalette: () => void }) {
-  const { project, git, remoteStatus, scanning, scan, openProject, bundle, setRoute } =
+  const { project, git, remoteStatus, scanning, scan, openProject, bundle, setRoute, theme, toggleTheme } =
     useAppStore();
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [showCloneModal, setShowCloneModal] = useState(false);
@@ -163,6 +165,17 @@ export function TopBar({ onOpenCommandPalette }: { onOpenCommandPalette: () => v
           <kbd className="mono rounded border border-ink-750 bg-ink-850 px-1 text-[9px] text-ink-500">
             ⌘K
           </kbd>
+        </button>
+
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="flex size-7 items-center justify-center rounded text-ink-500 hover:bg-ink-800 hover:text-ink-200 transition-colors"
+          title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+        >
+          {/* The icon shows the theme you would switch *to*. */}
+          {theme === "dark" ? <SunIcon size={13} /> : <MoonIcon size={13} />}
         </button>
 
         <button

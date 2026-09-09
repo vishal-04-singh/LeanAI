@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { Button, Chip, Field, Panel, Toggle } from "../components/primitives";
+import { Button, Chip, Field, Panel, Toggle, formatNumber } from "../components/primitives";
 import { api, toAppError } from "../ipc/client";
 import type {
   ModelRecord,
@@ -238,7 +238,7 @@ export function ModelsPage() {
                         <td className="py-2 font-medium text-ink-100">{m.displayName}</td>
                         <td className="py-2 mono text-[11px]">{m.source}</td>
                         <td className="py-2">
-                          {m.capabilityProfile.contextCap.toLocaleString()} tokens
+                          {formatNumber(m.capabilityProfile.contextCap)} tokens
                         </td>
                         <td
                           className="py-2 mono text-[10px] text-ink-500 max-w-[200px] truncate"
@@ -561,7 +561,7 @@ export function ModelsPage() {
                     <tr key={e.modelId}>
                       <td className="py-2 font-medium text-ink-100">{e.displayName}</td>
                       <td className="py-2">{e.provider}</td>
-                      <td className="py-2">{e.contextCap.toLocaleString()}</td>
+                      <td className="py-2">{formatNumber(e.contextCap)}</td>
                       <td className="py-2 mono">
                         {typeof inputRate === "number" ? `$${inputRate.toFixed(2)}` : "—"}
                       </td>

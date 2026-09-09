@@ -3,6 +3,7 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 
 import { FileTree } from "../components/FileTree";
+import { FolderPicker } from "../components/FolderPicker";
 import {
   Button,
   Chip,
@@ -17,6 +18,8 @@ import { api, toAppError } from "../ipc/client";
 import type {
   ContextSection,
   DiffScope,
+  FileClass,
+  SelectionRecipe,
   ExportDestination,
   ExportPreflight,
   FileEntry,
@@ -35,6 +38,20 @@ import {
   SparklesIcon,
 } from "../components/icons";
 
+/** Plain-language names for the classes shown in the exclusion summary. */
+const EXCLUSION_LABELS: Record<FileClass, string> = {
+  source_text: "Source text",
+  binary: "Binary files",
+  generated: "Generated and vendored output",
+  lockfile: "Dependency lockfiles",
+  credential_sensitive: "Credential-sensitive paths",
+  hidden_metadata: "Hidden and editor metadata",
+  too_large: "Too large for their type",
+  symlink: "Symbolic links",
+  unsupported_encoding: "Unsupported encoding",
+  unreadable: "Unreadable",
+};
+
 export function ContextBundlerPage() {
   const store = useAppStore();
   const { inventory, selection, git, options, bundle, building, context } = store;
@@ -42,6 +59,7 @@ export function ContextBundlerPage() {
   // Search & Filter state
   const [search, setSearch] = useState("");
   const [centerTab, setCenterTab] = useState<"bundle" | "context">("bundle");
+  const [browseMode, setBrowseMode] = useState<"files" | "folders">("files");
 
   // Presets & Git diff
   const [presets, setPresets] = useState<PresetRecord[]>([]);
@@ -92,15 +110,37 @@ export function ContextBundlerPage() {
     return total;
   }, [inventory, selection.files]);
 
+  /**
+   * What the policy kept out, grouped by reason. On a large repository this is
+   * the difference between a bundle that fits a context window and one that
+   * does not, so it belongs on screen rather than buried in the file tree.
+   */
+  const excluded = useMemo(() => {
+    const counts = new Map<FileClass, { files: number; bytes: number }>();
+    for (const file of inventory?.files ?? []) {
+      if (file.selectable) continue;
+      const slot = counts.get(file.class) ?? { files: 0, bytes: 0 };
+      slot.files += 1;
+      slot.bytes += file.sizeBytes;
+      counts.set(file.class, slot);
+    }
+    const rows = [...counts.entries()].sort((a, b) => b[1].bytes - a[1].bytes);
+    return {
+      files: rows.reduce((total, [, slot]) => total + slot.files, 0),
+      bytes: rows.reduce((total, [, slot]) => total + slot.bytes, 0),
+      rows,
+    };
+  }, [inventory]);
+
   if (!inventory) {
     return (
       <EmptyState
         icon={<FolderIcon size={22} />}
         title="No files indexed yet"
-        body="Open a repository to index files and craft your curated AI context bundle."
+        body="Open a repository to start choosing context."
         action={
           <Button variant="primary" onClick={() => store.setRoute("overview")}>
-            Go to Mission Control
+            Open a repository
           </Button>
         }
       />
@@ -178,7 +218,7 @@ export function ContextBundlerPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <FolderIcon size={13} className="text-ink-400" />
-                <h2 className="text-xs font-semibold text-ink-100">Repository Files</h2>
+                <h2 className="text-xs font-semibold text-ink-100">Files</h2>
               </div>
               <span className="mono text-[10px] text-ink-500">
                 {formatNumber(selectableCount)} / {formatNumber(inventory.files.length)}
@@ -195,34 +235,53 @@ export function ContextBundlerPage() {
                 type="search"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Filter files by path..."
+                placeholder="Filter by path…"
                 className="w-full rounded border border-ink-750 bg-ink-950 py-1 pl-7 pr-2.5 text-xs text-ink-100 placeholder:text-ink-500 focus:border-ink-600 focus:outline-hidden"
               />
             </div>
 
             {/* Quick Action Toolbar */}
+            {/* One-click starting points, so a new repository does not open on
+                an empty selection and a hundred checkboxes. */}
+            <div className="flex flex-wrap items-center gap-1 pt-0.5">
+              {(
+                [
+                  ["source_only", "Source"],
+                  ["tests_only", "Tests"],
+                  ["everything", "All"],
+                ] as [SelectionRecipe, string][]
+              ).map(([recipe, label]) => (
+                <button
+                  key={recipe}
+                  type="button"
+                  onClick={() => void store.applyRecipe(recipe)}
+                  className="rounded border border-ink-800 px-2 py-1 text-[11px] text-ink-300 transition-colors hover:border-ink-700 hover:bg-ink-800 hover:text-ink-100"
+                >
+                  {label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={store.clearSelection}
+                className="rounded px-2 py-1 text-[11px] text-ink-400 hover:bg-ink-800 hover:text-danger"
+              >
+                Clear
+              </button>
+            </div>
+
             <div className="flex items-center justify-between pt-0.5 text-xs">
-              <div className="flex gap-1">
-                <button
-                  type="button"
-                  onClick={() =>
-                    store.selectPaths(
-                      inventory.files.filter((f) => f.selectable).map((f) => f.path),
-                      true,
-                    )
-                  }
-                  className="rounded px-2 py-1 text-[11px] text-ink-300 hover:bg-ink-800 hover:text-ink-100"
-                >
-                  Select All
-                </button>
-                <button
-                  type="button"
-                  onClick={store.clearSelection}
-                  className="rounded px-2 py-1 text-[11px] text-ink-400 hover:bg-ink-800 hover:text-danger"
-                >
-                  Clear
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setBrowseMode(browseMode === "files" ? "folders" : "files")}
+                className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition-colors ${
+                  browseMode === "folders"
+                    ? "bg-brand/15 text-brand"
+                    : "text-ink-400 hover:bg-ink-800 hover:text-ink-200"
+                }`}
+              >
+                <FolderIcon size={11} />
+                <span>{browseMode === "folders" ? "Browsing folders" : "Add whole folders"}</span>
+              </button>
 
               {git?.isRepository ? (
                 <button
@@ -230,12 +289,12 @@ export function ContextBundlerPage() {
                   onClick={() => setShowDiffFilter(!showDiffFilter)}
                   className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition-colors ${
                     showDiffFilter
-                      ? "bg-white text-ink-950"
+                      ? "bg-brand/15 text-brand"
                       : "text-ink-400 hover:bg-ink-800 hover:text-ink-200"
                   }`}
                 >
                   <GitBranchIcon size={11} />
-                  <span>Git Changes</span>
+                  <span>Changed only</span>
                 </button>
               ) : null}
             </div>
@@ -243,7 +302,7 @@ export function ContextBundlerPage() {
             {/* Expandable Git Diff Selection Panel */}
             {showDiffFilter && git?.isRepository ? (
               <div className="rounded-lg border border-ink-750 bg-ink-950/90 p-2.5 space-y-2 text-xs">
-                <span className="font-medium text-ink-300">Select changed scopes:</span>
+                <span className="font-medium text-ink-300">Include which changes?</span>
                 <div className="grid grid-cols-2 gap-1 text-[11px]">
                   {(["staged", "unstaged", "untracked", "against_ref"] as DiffScope[]).map(
                     (scope) => (
@@ -256,7 +315,7 @@ export function ContextBundlerPage() {
                               e.target.checked ? [...prev, scope] : prev.filter((s) => s !== scope),
                             )
                           }
-                          className="rounded size-3 accent-ink-100"
+                          className="rounded size-3 accent-brand"
                         />
                         <span className="capitalize">{scope.replace("_", " ")}</span>
                       </label>
@@ -273,41 +332,54 @@ export function ContextBundlerPage() {
                   />
                 )}
                 <Button variant="secondary" size="xs" className="w-full" onClick={handleApplyDiff}>
-                  Apply Git Diff Selection
+                  Select changed files
                 </Button>
               </div>
             ) : null}
           </div>
 
-          {/* Virtualized File Tree (Fully Tested & Accessible) */}
           <div className="flex-1 overflow-hidden p-2">
-            <FileTree
-              inventory={inventory}
-              selected={selection.files}
-              overrides={selection.overrides}
-              search={search}
-              onToggleFile={store.toggleFile}
-              onToggleDirectory={store.toggleDirectory}
-              onRequestOverride={setPendingOverride}
-            />
+            {browseMode === "files" ? (
+              <FileTree
+                inventory={inventory}
+                selected={selection.files}
+                overrides={selection.overrides}
+                search={search}
+                onToggleFile={store.toggleFile}
+                onToggleDirectory={store.toggleDirectory}
+                onRequestOverride={setPendingOverride}
+              />
+            ) : (
+              <FolderPicker
+                inventory={inventory}
+                selected={selection.files}
+                search={search}
+                onToggleDirectory={store.toggleDirectory}
+              />
+            )}
           </div>
 
           {/* Pane Footer: Selection Count & Presets */}
           <div className="border-t border-ink-800/80 bg-ink-950/60 p-2.5">
             <div className="flex items-center justify-between text-[11px] text-ink-400">
-              <span className="font-semibold text-white">
-                {formatNumber(selection.files.size)} files selected
+              <span className="font-semibold text-ink-100">
+                {formatNumber(selection.files.size)} selected
               </span>
               <span className="mono">{formatBytes(selectedBytes)}</span>
             </div>
 
-            {/* Presets row */}
+            {/* Presets are set-once and were dominating the footer; they now
+                live behind a disclosure. */}
+            <details className="mt-2 group">
+              <summary className="cursor-pointer list-none text-[11px] text-ink-500 hover:text-ink-300">
+                Presets{presets.length > 0 ? ` (${presets.length})` : ""}
+              </summary>
             <div className="mt-2 flex items-center gap-1.5">
               <input
                 type="text"
                 value={presetName}
                 onChange={(e) => setPresetName(e.target.value)}
-                placeholder="Save current selection as preset..."
+                placeholder="Name this selection…"
                 className="w-full rounded border border-ink-800 bg-ink-900 px-2 py-1 text-[11px] text-ink-100 placeholder:text-ink-600"
               />
               <Button
@@ -339,13 +411,14 @@ export function ContextBundlerPage() {
                       store.setOptions(p.options);
                       store.setNotice(`Applied preset "${p.name}".`);
                     }}
-                    className="rounded border border-ink-800 bg-ink-900 px-1.5 py-0.5 text-[10px] text-ink-300 hover:border-ink-700 hover:text-white"
+                    className="rounded border border-ink-800 bg-ink-900 px-1.5 py-0.5 text-[10px] text-ink-300 hover:border-ink-700 hover:text-ink-100"
                   >
                     {p.name} ({p.validation?.files.length ?? 0})
                   </button>
                 ))}
               </div>
             ) : null}
+            </details>
           </div>
         </div>
 
@@ -359,12 +432,12 @@ export function ContextBundlerPage() {
                 onClick={() => setCenterTab("bundle")}
                 className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                   centerTab === "bundle"
-                    ? "bg-ink-800 text-white shadow-2xs"
+                    ? "bg-ink-800 text-ink-100 shadow-2xs"
                     : "text-ink-400 hover:text-ink-200"
                 }`}
               >
                 <FileCodeIcon size={12} className="text-ink-300" />
-                <span>Bundle Preview</span>
+                <span>Bundle</span>
               </button>
 
               <button
@@ -372,7 +445,7 @@ export function ContextBundlerPage() {
                 onClick={() => setCenterTab("context")}
                 className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition-colors ${
                   centerTab === "context"
-                    ? "bg-ink-800 text-white shadow-2xs"
+                    ? "bg-ink-800 text-ink-100 shadow-2xs"
                     : "text-ink-400 hover:text-ink-200"
                 }`}
               >
@@ -395,7 +468,7 @@ export function ContextBundlerPage() {
                 onClick={() => handleStartExport("clipboard")}
               >
                 <CopyIcon size={12} />
-                <span>Copy Context</span>
+                <span>Copy</span>
               </Button>
               <Button
                 variant="primary"
@@ -403,7 +476,7 @@ export function ContextBundlerPage() {
                 disabled={!bundle || selection.files.size === 0}
                 onClick={() => handleStartExport("file")}
               >
-                <span>Export Bundle →</span>
+                <span>Save as…</span>
               </Button>
             </div>
           </div>
@@ -414,20 +487,19 @@ export function ContextBundlerPage() {
               selection.files.size === 0 ? (
                 <EmptyState
                   icon={<FileCodeIcon size={20} />}
-                  title="No files selected for context"
-                  body="Select source files from the left explorer. LeanAi will generate a curated markdown document optimized for your AI agent."
+                  title="Nothing selected"
+                  body="Pick files on the left. The bundle preview shows exactly what a model would receive."
                 />
               ) : building && !bundle ? (
                 <div className="flex h-full items-center justify-center py-20 text-xs text-ink-400">
                   <RefreshCwIcon size={16} className="animate-spin text-ink-300 mr-2" />
-                  <span>Synthesizing bundle preview…</span>
+                  <span>Building preview…</span>
                 </div>
               ) : bundle ? (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-xs text-ink-400">
                     <span className="font-semibold text-ink-200">
-                      Generated Bundle ({formatNumber(bundle.fileCount)} files ·{" "}
-                      {formatBytes(bundle.byteLen)})
+                      {formatNumber(bundle.fileCount)} files · {formatBytes(bundle.byteLen)}
                     </span>
                     <span className="mono text-[11px] text-ink-500">
                       sha256 {bundle.outputHash.slice(0, 16)}…
@@ -441,8 +513,8 @@ export function ContextBundlerPage() {
 
                   {bundle.previewTruncated ? (
                     <p className="rounded-md border border-warn/30 bg-warn/10 p-2.5 text-[11px] text-warn">
-                      Preview truncated for screen performance. The full export includes all{" "}
-                      {formatNumber(bundle.fileCount)} files in complete fidelity.
+                      Preview shortened for display. The saved bundle and every number here cover
+                      all {formatNumber(bundle.fileCount)} files in full.
                     </p>
                   ) : null}
                 </div>
@@ -452,16 +524,14 @@ export function ContextBundlerPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-xs font-semibold text-ink-100">
-                      Project Architecture Spec
-                    </h3>
+                    <h3 className="text-xs font-semibold text-ink-100">Project context index</h3>
                     <p className="text-[11px] text-ink-400">
-                      Deterministic context index extracting structure, routes, dependencies, and
-                      modules.
+                      Structure, modules, routes and dependencies — written by code, not a model.
+                      Every section links to the files it came from.
                     </p>
                   </div>
                   <Button variant="primary" size="xs" onClick={store.generateContext}>
-                    {context ? "Regenerate Spec" : "Generate Spec"}
+                    {context ? "Regenerate" : "Generate"}
                   </Button>
                 </div>
 
@@ -494,7 +564,7 @@ export function ContextBundlerPage() {
                                     store.setError(toAppError(err));
                                   }
                                 }}
-                                className="mono rounded border border-ink-800 bg-ink-900 px-1.5 py-0.5 text-[10px] text-ink-300 hover:border-ink-600 hover:text-white transition-colors"
+                                className="mono rounded border border-ink-800 bg-ink-900 px-1.5 py-0.5 text-[10px] text-ink-300 hover:border-ink-600 hover:text-ink-100 transition-colors"
                               >
                                 {ref.path}
                               </button>
@@ -506,11 +576,11 @@ export function ContextBundlerPage() {
                   </div>
                 ) : (
                   <EmptyState
-                    title="Spec not generated yet"
-                    body="Generate PROJECT_CONTEXT.md to equip your agents with a deterministic architecture map."
+                    title="Not generated yet"
+                    body="Build a map of this repository that a model can read instead of the whole source."
                     action={
                       <Button variant="primary" onClick={store.generateContext}>
-                        Generate Spec Now
+                        Generate
                       </Button>
                     }
                   />
@@ -520,26 +590,77 @@ export function ContextBundlerPage() {
           </div>
         </div>
 
-        {/* PANE 3: Token Inspector & Output Settings */}
+        {/* PANE 3: token budget, then the controls that change it */}
         <div className="flex flex-col overflow-y-auto space-y-2.5 rounded-lg border border-ink-800/80 bg-ink-900/60 p-2.5 shadow-2xs">
-          {/* Token Gauge with Color Zones */}
           <TokenGauge
             tokens={bundle?.estimate.value ?? 0}
             label={bundle?.estimateLabel ?? "Indicative cl100k estimate"}
             targetModel="Claude 3.5 Sonnet"
           />
 
-          {/* Bundle Formatting Toggles */}
-          <Panel
-            title="Formatting Engine"
-            description="Controls the structure and annotations included in the bundle."
-          >
-            <div className="space-y-1">
+          {/* Biggest contributors first: on a large repository this is the
+              panel that tells you what to drop. */}
+          {bundle && bundle.contributions.length > 0 ? (
+            <Panel title="Biggest files" description="What is using the token budget.">
+              <ul className="max-h-56 space-y-2 overflow-y-auto text-[11px]">
+                {[...bundle.contributions]
+                  .sort((a, b) => b.tokens - a.tokens)
+                  .slice(0, 10)
+                  .map((c) => (
+                    <li key={c.path}>
+                      <div className="flex justify-between gap-2">
+                        <span className="mono truncate text-ink-300">{c.path}</span>
+                        <span className="mono shrink-0 text-ink-400">
+                          {formatNumber(c.tokens)} ({((c.share ?? 0) * 100).toFixed(0)}%)
+                        </span>
+                      </div>
+                      <div className="mt-1 h-1 w-full rounded-full bg-ink-800">
+                        <div
+                          className="h-full rounded-full bg-brand"
+                          style={{ width: `${Math.max((c.share ?? 0) * 100, 2)}%` }}
+                        />
+                      </div>
+                    </li>
+                  ))}
+              </ul>
+            </Panel>
+          ) : null}
+
+          {/* What the policy already kept out, and why. */}
+          {excluded.files > 0 ? (
+            <Panel
+              title="Never bundled"
+              description={`${formatNumber(excluded.files)} files · ${formatBytes(excluded.bytes)} the policy keeps out.`}
+            >
+              <ul className="space-y-1 text-[11px]">
+                {excluded.rows.map(([fileClass, slot]) => (
+                  <li key={fileClass} className="flex items-baseline justify-between gap-2">
+                    <span className="truncate text-ink-300">{EXCLUSION_LABELS[fileClass]}</span>
+                    <span className="mono shrink-0 text-ink-500">
+                      {formatNumber(slot.files)} · {formatBytes(slot.bytes)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-[10px] leading-relaxed text-ink-500">
+                Each excluded file is still listed in the tree with its reason. Any of them can be
+                added back one at a time.
+              </p>
+            </Panel>
+          ) : null}
+
+          {/* Format is set once and then ignored, so it collapses by default. */}
+          <details className="rounded-lg border border-ink-800/80 bg-ink-900/60 shadow-2xs">
+            <summary className="cursor-pointer list-none px-4 py-2.5 text-xs font-semibold text-ink-100">
+              Output format
+              <span className="ml-1.5 font-normal text-ink-500">— what each file block looks like</span>
+            </summary>
+            <div className="space-y-1 border-t border-ink-800/60 p-4 pt-3">
               <Toggle
                 checked={options.headers}
                 onChange={(headers) => store.setOptions({ headers })}
                 label="File path headers"
-                hint="Guides model on source file origins."
+                hint="Tells the model which file each block came from."
               />
               <Toggle
                 checked={options.includeTree}
@@ -554,13 +675,13 @@ export function ContextBundlerPage() {
               <Toggle
                 checked={options.lineNumbers}
                 onChange={(lineNumbers) => store.setOptions({ lineNumbers })}
-                label="Include line numbers"
-                hint="Assists in citing exact lines (costs +10% tokens)."
+                label="Line numbers"
+                hint="Helps a model cite exact lines; costs roughly 10% more tokens."
               />
               <Toggle
                 checked={options.fileSizeAnnotations}
                 onChange={(fileSizeAnnotations) => store.setOptions({ fileSizeAnnotations })}
-                label="Size & token annotations"
+                label="Size and token annotations"
               />
               <Toggle
                 checked={options.includeFrontMatter}
@@ -570,52 +691,22 @@ export function ContextBundlerPage() {
               <Toggle
                 checked={options.normalizeLineEndings}
                 onChange={(normalizeLineEndings) => store.setOptions({ normalizeLineEndings })}
-                label="Normalize LF line endings"
+                label="Normalise line endings"
+                hint="Keeps output identical across Windows and macOS."
               />
             </div>
-          </Panel>
+          </details>
 
-          {/* Top Token Contributors */}
-          {bundle && bundle.contributions.length > 0 ? (
-            <Panel
-              title="Token Share by File"
-              description="Identifies heaviest contributors to prompt budget."
-            >
-              <ul className="max-h-56 space-y-2 overflow-y-auto text-[11px]">
-                {[...bundle.contributions]
-                  .sort((a, b) => b.tokens - a.tokens)
-                  .slice(0, 10)
-                  .map((c) => (
-                    <li key={c.path}>
-                      <div className="flex justify-between gap-2">
-                        <span className="mono truncate text-ink-300">{c.path}</span>
-                        <span className="mono text-ink-400 shrink-0">
-                          {formatNumber(c.tokens)} ({((c.share ?? 0) * 100).toFixed(0)}%)
-                        </span>
-                      </div>
-                      <div className="mt-1 h-1 w-full rounded-full bg-ink-800">
-                        <div
-                          className="h-full rounded-full bg-ink-300"
-                          style={{ width: `${Math.max((c.share ?? 0) * 100, 2)}%` }}
-                        />
-                      </div>
-                    </li>
-                  ))}
-              </ul>
-            </Panel>
-          ) : null}
-
-          {/* Policy & Secret Warning Summary */}
           {bundle && (bundle.skipped.length > 0 || bundle.truncations.length > 0) ? (
-            <Panel title="Exclusion Warnings">
+            <Panel title="Warnings">
               <ul className="space-y-1 text-[11px] text-warn">
                 {bundle.truncations.map((t) => (
                   <li key={t.path}>
                     {t.path} capped to {formatBytes(t.includedBytes)}
                   </li>
                 ))}
-                {bundle.skipped.map((s) => (
-                  <li key={s}>{s} could not be read and was excluded</li>
+                {bundle.skipped.map((f) => (
+                  <li key={f}>{f} could not be read and was left out</li>
                 ))}
               </ul>
             </Panel>
@@ -690,11 +781,11 @@ function OverrideDialog({
           </p>
         ) : null}
         <label className="mt-3.5 block text-xs text-ink-300">
-          Type <span className="mono font-bold text-white">{phrase}</span> to unlock:
+          Type <span className="mono font-bold text-ink-100">{phrase}</span> to unlock:
           <input
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
-            className="mt-1 w-full rounded-md border border-ink-700 bg-ink-950 px-2.5 py-1.5 text-xs text-white focus:border-danger focus:outline-hidden"
+            className="mt-1 w-full rounded-md border border-ink-700 bg-ink-950 px-2.5 py-1.5 text-xs text-ink-100 focus:border-danger focus:outline-hidden"
             autoFocus
           />
         </label>

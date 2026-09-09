@@ -24,6 +24,7 @@ import {
   ZapIcon,
 } from "../components/icons";
 import { CloneRepoModal } from "../components/git/CloneRepoModal";
+import { ProjectSwitcher } from "../components/ProjectSwitcher";
 
 export function OverviewPage() {
   const {
@@ -75,7 +76,7 @@ export function OverviewPage() {
       <div className="flex flex-col items-center justify-center h-full gap-8 py-8">
         {/* Hero */}
         <div className="flex flex-col items-center gap-4 text-center max-w-sm">
-          <LogoIcon size={52} className="rounded-2xl shadow-lg" />
+          <LogoIcon size={52} className="logo-tile" />
           <div>
             <h1 className="text-lg font-bold text-ink-100 tracking-tight">LeanAI Desktop</h1>
             <p className="mt-1 text-xs text-ink-400 leading-relaxed">
@@ -109,7 +110,7 @@ export function OverviewPage() {
                   className="flex items-center justify-between rounded-lg border border-ink-800/60 bg-ink-900/40 px-3 py-2 text-left hover:border-brand/30 hover:bg-ink-800/40 transition-all group"
                 >
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-ink-200 group-hover:text-white transition-colors truncate">
+                    <p className="text-xs font-medium text-ink-200 group-hover:text-ink-100 transition-colors truncate">
                       {rec.displayName}
                     </p>
                     <p className="mono text-[10px] text-ink-600 truncate mt-0.5">
@@ -143,7 +144,7 @@ export function OverviewPage() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-sm font-bold text-white tracking-tight">{project.displayName}</h1>
+              <ProjectSwitcher onCloneRequest={() => setShowCloneModal(true)} />
               {git?.isRepository && (
                 <Chip tone={git.isDirty ? "warn" : "ok"} dot>
                   <GitBranchIcon size={10} className="shrink-0" />
@@ -279,6 +280,10 @@ export function OverviewPage() {
           />
         )}
       </div>
+
+      {/* Mounted here as well as on the welcome screen, so the switcher's
+          "Clone from GitHub…" works while a repository is already open. */}
+      <CloneRepoModal open={showCloneModal} onClose={() => setShowCloneModal(false)} />
     </div>
   );
 }
